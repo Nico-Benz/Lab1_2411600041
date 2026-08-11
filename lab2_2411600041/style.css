@@ -111,7 +111,7 @@ ul li {
 
 /* Custom Classes */
 .highlight {
-  color: #e67e22;
+  color: #6E5774;
   font-weight: bold;
 }
 
@@ -129,7 +129,7 @@ ul li {
 
 .button {
   display: inline-block;
-  background-color: #e67e22;
+  background-color: #6E5774;
   color: white;
   padding: 8px 20px;
   border-radius: 5px;
@@ -139,5 +139,5 @@ ul li {
 }
 
 .button:hover {
-  background-color: #d35400;
+  background-color: #6e5774;
 }
