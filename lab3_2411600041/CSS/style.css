@@ -1,0 +1,152 @@
+/* ============================
+   THEME: Student Grade Portal — "Mysterious Night Sky" (same palette as Lab 2)
+   Primary:      #231C35  (Headers, navbar, primary buttons)
+   Secondary:    #2A2B47  (Accents, secondary buttons)
+   Background:   #F5F3F8  (Page background)
+   Text:         #231C35  (Main text)
+   Accent:       #E67E22  (Highlights, important numbers)
+   Light Accent: #6E5774  (Cards, section backgrounds)
+   Success:      #2E8B57  (Positive indicators, e.g. Submitted/Present)
+   Danger:       #D9534F  (Warnings, e.g. Missed/Absent)
+   ============================ */
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #F5F3F8;
+  color: #231C35;
+}
+
+/* ===== LOGIN PAGE ===== */
+.login-body {
+  background: linear-gradient(135deg, #231C35 0%, #484564 50%, #6E5774 100%);
+  min-height: 100vh;
+}
+
+.login-card {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.login-card-header {
+  background-color: #231C35;
+  color: #ffffff;
+  padding: 28px 20px;
+}
+
+.login-logo {
+  font-size: 2.5rem;
+  margin-bottom: 6px;
+}
+
+.login-btn {
+  background-color: #E67E22;
+  color: #ffffff;
+  font-weight: bold;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+.login-btn:hover {
+  background-color: #d35400;
+  color: #ffffff;
+}
+
+/* ===== DASHBOARD PAGE ===== */
+.dashboard-navbar {
+  background-color: #231C35;
+}
+
+.logout-btn {
+  background-color: #E67E22;
+  color: #ffffff;
+  font-weight: bold;
+  border: none;
+}
+
+.logout-btn:hover {
+  background-color: #d35400;
+  color: #ffffff;
+}
+
+.sidebar {
+  background-color: #2A2B47;
+  min-height: calc(100vh - 56px);
+}
+
+.sidebar .nav-link {
+  color: #d4c9de;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+  background-color: #6E5774;
+  color: #ffffff;
+}
+
+#greeting-text {
+  color: #231C35;
+  font-weight: bold;
+}
+
+/* Statistic Cards */
+.stat-card {
+  border: none;
+  border-radius: 10px;
+  background-color: #ffffff;
+  border-left: 5px solid #6E5774;
+  box-shadow: 0 2px 6px rgba(35, 28, 53, 0.1);
+}
+
+.stat-title {
+  color: #6E5774;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  color: #E67E22;
+  font-weight: bold;
+  margin-bottom: 0;
+}
+
+/* Activity Table */
+.activity-card {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(35, 28, 53, 0.1);
+}
+
+.activity-card .card-header {
+  background-color: #231C35;
+  color: #ffffff;
+  border-radius: 10px 10px 0 0;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: #ffffff;
+}
+
+.status-complete {
+  background-color: #2E8B57;
+}
+
+.status-pending {
+  background-color: #E67E22;
+}
+
+.status-missed {
+  background-color: #D9534F;
+}
+
+.dashboard-footer {
+  background-color: #231C35;
+  color: #ffffff;
+}
