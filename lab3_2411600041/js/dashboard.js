@@ -40,10 +40,10 @@ function updateGreeting(username) {
 
 function updateStatistics() {
     const stats = [
-        { title: 'GPA', value: '1,284', color: 'text-primary', icon: '📦' },
-        { title: 'Courses', value: '$45,230', color: 'text-success', icon: '💰' },
-        { title: 'Assignment Due', value: '342', color: 'text-info', icon: '👥' },
-        { title: 'Attendance', value: '2.4%', color: 'text-warning', icon: '📊' }
+        { title: 'GPA', value: '1.75', color: 'text-primary', icon: '🎓' },
+        { title: 'Courses', value: '6', color: 'text-success', icon: '📚' },
+        { title: 'Assignment Due', value: '4', color: 'text-info', icon: '📝' },
+        { title: 'Attendance', value: '96%', color: 'text-warning', icon: '📅' }
     ];
 
     const cardTitles = document.querySelectorAll('[id^="stat"][id$="-title"]');
@@ -69,12 +69,12 @@ function populateActivityTable() {
     if (!tableBody) return;
 
     const activities = [
-        { date: '2026-08-10 14:30', activity: 'New order received #ORD-4532', status: 'success' },
-        { date: '2026-08-10 13:15', activity: 'Customer support ticket resolved', status: 'info' },
-        { date: '2026-08-10 11:45', activity: 'Product inventory updated', status: 'warning' },
-        { date: '2026-08-10 09:00', activity: 'New customer signed up', status: 'success' },
-        { date: '2026-08-09 16:20', activity: 'Payment received for invoice #INV-312', status: 'success' },
-        { date: '2026-08-09 14:10', activity: 'Shipping delay reported for order #ORD-4521', status: 'danger' }
+        { date: '2026-08-12', activity: 'Lab Exercise 2 Submitted - Web Development', status: 'success' },
+        { date: '2026-08-13', activity: 'Quiz 3 - Data Structures', status: 'warning' },
+        { date: '2026-08-10', activity: 'Project Proposal Submitted - Database Systems', status: 'success' },
+        { date: '2026-08-08', activity: 'Assignment 4 - Networking', status: 'danger' },
+        { date: '2026-08-06', activity: 'Midterm Grade Released - Web Development', status: 'info' },
+        { date: '2026-08-04', activity: 'Attendance recorded - Systems Analysis and Design', status: 'success' }
     ];
 
     tableBody.innerHTML = '';
