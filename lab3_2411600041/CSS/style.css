@@ -18,13 +18,14 @@
 }
 
 body {
-  background-color: var(--theme-background);
+  background: linear-gradient(160deg, #68518d 0%, #863d98 40%, #826a8d 100%);
   color: var(--theme-text);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height:  100vh;
 }
 
 .login-page {
-  background: linear-gradient(135deg, var(--theme-primary), var(--theme-secondary));
+  background: linear-gradient(160deg, #573194 0%, #6E5774 40%, #5a3669 100%);
   min-height: 100vh;
 }
 
