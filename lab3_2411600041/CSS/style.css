@@ -98,36 +98,8 @@ body {
   margin-bottom: 0;
 }
 
-.shadow-hover {
-  transition: box-shadow 0.3s ease;
-}
-
-.shadow-hover:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
-}
-
 .border-accent {
   border-left: 4px solid var(--theme-accent);
-}
-
-.border-primary-custom {
-  border-left: 4px solid var(--theme-primary);
-}
-
-.border-success-custom {
-  border-left: 4px solid var(--bs-success);
-}
-
-.bg-gradient-primary {
-  background: linear-gradient(135deg, var(--theme-primary), var(--theme-secondary));
-}
-
-.text-accent {
-  color: var(--theme-accent);
-}
-
-.text-primary-custom {
-  color: var(--theme-primary);
 }
 
 .btn-primary {

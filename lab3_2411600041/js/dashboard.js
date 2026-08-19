@@ -42,7 +42,7 @@ function updateStatistics() {
     const stats = [
         { title: 'GPA', value: '1.75', color: 'text-primary', icon: '🎓' },
         { title: 'Courses', value: '6', color: 'text-success', icon: '📚' },
-        { title: 'Assignment Due', value: '4', color: 'text-info', icon: '📝' },
+        { title: 'Assignment', value: '4', color: 'text-info', icon: '📝' },
         { title: 'Attendance', value: '96%', color: 'text-warning', icon: '📅' }
     ];
 

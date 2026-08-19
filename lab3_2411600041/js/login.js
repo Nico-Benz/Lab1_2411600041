@@ -1,8 +1,19 @@
 document.addEventListener('DOMContentLoaded', function() {
+    
     const loginBtn = document.getElementById('loginBtn');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     const feedbackDiv = document.getElementById('loginFeedback');
+
+
+    // I add function of my remeber me
+    const rememberCheckbox = document.getElementById('rememberMe');
+    const savedUsername = localStorage.getItem('rememberedUsername');
+    if (savedUsername) {
+    usernameInput.value = savedUsername;
+    rememberCheckbox.checked = true;
+    }
+
 
     if (localStorage.getItem('isLoggedIn') === 'true') {
         window.location.href = 'dashboard.html';
@@ -25,6 +36,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (username === validUsername && password === validPassword) {
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('user', username);
+
+            // also this the added code
+        if (rememberCheckbox.checked) {
+             localStorage.setItem('rememberedUsername', username);
+        } else {
+             localStorage.removeItem('rememberedUsername');
+        }
+           
 
             showFeedback('Login successful! Redirecting...', 'success');
 
