@@ -1,9 +1,3 @@
-/* ============================================================
-   charts.js
-   All Chart.js rendering logic for the dashboard.
-   Depends on: dataManager.js (loaded before this file), Chart.js (CDN)
-   ============================================================ */
-
 let chartInstances = {
     performance: null,
     attendance: null,

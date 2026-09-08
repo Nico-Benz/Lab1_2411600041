@@ -121,8 +121,6 @@ main.flex-grow-1 {
 }
 
 
-
-
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -141,7 +139,8 @@ main.flex-grow-1 {
   background: var(--theme-primary);
 }
 
-/* Chart container styling — fixed HEIGHT only; width always fills its card */
+/* Chart container styling */
+
 .chart-container {
   position: relative;
   height: 300px;

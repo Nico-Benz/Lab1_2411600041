@@ -4,7 +4,7 @@
         "date": "2026-07-29",
         "activity": "Prelim Activity 1 - Quantitative Methods",
         "status": "danger",
-        "grade": 68,
+        "grade": 71,
         "semester": 1
     },
     {
@@ -36,7 +36,7 @@
         "date": "2026-08-06",
         "activity": "Midterm Activity 1 - Quantitative Methods",
         "status": "success",
-        "grade": 93,
+        "grade": 94,
         "semester": 1
     },
     {
@@ -44,7 +44,7 @@
         "date": "2026-07-25",
         "activity": "Lab Exercise 2 Submitted - Web Development",
         "status": "success",
-        "grade": 90,
+        "grade": 91,
         "semester": 1
     },
     {
@@ -68,7 +68,7 @@
         "date": "2026-08-08",
         "activity": "Assignment 4 - Networking",
         "status": "warning",
-        "grade": 75,
+        "grade": 76,
         "semester": 2
     },
     {
@@ -76,7 +76,7 @@
         "date": "2026-08-06",
         "activity": "Midterm Grade Released - Web Development",
         "status": "info",
-        "grade": 84,
+        "grade": 82,
         "semester": 2
     },
     {
@@ -84,7 +84,7 @@
         "date": "2026-08-04",
         "activity": "Attendance recorded - Systems Analysis and Design",
         "status": "success",
-        "grade": 95,
+        "grade": 96,
         "semester": 2
     },
     {
@@ -92,7 +92,7 @@
         "date": "2026-08-08",
         "activity": "Assignment 5 - Networking",
         "status": "info",
-        "grade": 86,
+        "grade": 84,
         "semester": 2
     },
     {
@@ -100,7 +100,7 @@
         "date": "2026-08-06",
         "activity": "Finals Grade Released - Web Development",
         "status": "danger",
-        "grade": 59,
+        "grade": 60,
         "semester": 2
     },
     {
@@ -140,7 +140,7 @@
         "date": "2026-07-22",
         "activity": "Assignment 1 - Web Systems and Technologies",
         "status": "danger",
-        "grade": 60,
+        "grade": 59,
         "semester": 1
     },
     {
@@ -148,7 +148,7 @@
         "date": "2026-07-26",
         "activity": "Laboratory Exercise 1 - Web Systems and Technologies",
         "status": "danger",
-        "grade": 48,
+        "grade": 47,
         "semester": 1
     },
     {
@@ -172,7 +172,7 @@
         "date": "2026-08-11",
         "activity": "Lab 2 - Web Systems and Technologies",
         "status": "info",
-        "grade": 80,
+        "grade": 82,
         "semester": 2
     },
     {
@@ -180,7 +180,7 @@
         "date": "2026-08-19",
         "activity": "Lab 3 - Web Systems and Technologies",
         "status": "success",
-        "grade": 97,
+        "grade": 99,
         "semester": 2
     },
     {
@@ -212,7 +212,7 @@
         "date": "2026-08-07",
         "activity": "Computer Laboratory Activity 2 - System Analysis and Design",
         "status": "info",
-        "grade": 86,
+        "grade": 88,
         "semester": 2
     },
     {
@@ -220,7 +220,7 @@
         "date": "2026-09-03",
         "activity": "Computer Laboratory Activity 3 - System Analysis and Design",
         "status": "success",
-        "grade": 94,
+        "grade": 91,
         "semester": 2
     }
 ]
