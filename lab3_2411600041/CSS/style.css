@@ -8,6 +8,7 @@
   --bs-warning: #E67E22;
   --bs-danger: #D9534F;
 
+  /* Custom Theme Colors */
   --theme-primary: #231C35;
   --theme-secondary: #2A2B47;
   --theme-accent: #E67E22;
@@ -20,7 +21,7 @@ body {
   background: linear-gradient(160deg, #68518d 0%, #863d98 40%, #826a8d 100%);
   color: var(--theme-text);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  min-height: 100vh;
+  min-height:  100vh;
 }
 
 .login-page {
@@ -38,15 +39,6 @@ body {
 .login-card .card-header {
   background: linear-gradient(135deg, var(--theme-primary), var(--theme-secondary));
   border-bottom: none;
-}
-
-main.flex-grow-1 {
-  min-width: 0;
-}
-
-.top-navbar {
-  background-color: var(--theme-primary);
-  padding: 0.75rem 1.5rem;
 }
 
 .sidebar {
@@ -120,6 +112,16 @@ main.flex-grow-1 {
   border-color: #1a1527;
 }
 
+@media (max-width: 768px) {
+  .sidebar {
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  .stat-card .card-text {
+    font-size: 1.4rem;
+  }
+}
 
 ::-webkit-scrollbar {
   width: 8px;
@@ -138,8 +140,9 @@ main.flex-grow-1 {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--theme-primary);
 }
-
-/* Chart container styling */
+/* ============================================================
+   NEW FOR LAB 4 — added below the original Lab 3 styles
+   ============================================================ */
 
 .chart-container {
   position: relative;
@@ -159,29 +162,27 @@ main.flex-grow-1 {
   }
 }
 
-#searchBox {
-  margin: 0.5em;
-  border: 2px solid #6c63ff;
-  border-radius: 8px;
-  padding: 6px 12px;
-  width: 250px;
-  transition: all 0.3s ease;
-}
-
-#searchBox:focus {
-  outline: none;
-  border-color: #4CAF50;
-  box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
-}
-
-/* lab 4 */
-
 .low-grade-row {
   background-color: rgba(217, 83, 79, 0.08);
 }
 
 .low-grade-row:hover {
   background-color: rgba(217, 83, 79, 0.15);
+}
+
+#searchBox {
+  border: 2px solid var(--theme-light-accent);
+  border-radius: 8px;
+  padding: 6px 12px;
+  max-width: 320px;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+#searchBox:focus {
+  outline: none;
+  border-color: var(--theme-accent);
+  box-shadow: 0 0 8px rgba(230, 126, 34, 0.4);
 }
 
 .toast-container-custom {
@@ -207,11 +208,4 @@ main.flex-grow-1 {
 @keyframes toast-in {
   from { transform: translateX(20px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
-}
-
-@media (max-width: 768px) {
-  #searchBox {
-    width: 100% !important;
-    margin: 0.5em 0 !important;
-  }
 }

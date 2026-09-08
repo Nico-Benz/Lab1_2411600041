@@ -1,6 +1,8 @@
 /* ============================================================
    dashboard.js
-   Enhanced Student Grade Portal Dashboard
+   Student Grade Portal Dashboard
+   Lab 3 base (greeting, logout) + Lab 4 features (data manager,
+   charts, filtering, search, sorting, export, real-time updates)
    Depends on: dataManager.js, charts.js (both loaded before this file)
    ============================================================ */
 
@@ -22,15 +24,19 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     const username = localStorage.getItem('user') || 'User';
+
     updateGreeting(username);
 
-    const userNameSpan = document.getElementById('userNameNav');
-    if (userNameSpan) userNameSpan.textContent = username;
+    const userNameSpan = document.getElementById('userName');
+    if (userNameSpan) {
+        userNameSpan.textContent = username;
+    }
 
-    await DataManager.initializeData(); // now async: tries the PHP API first
+    setupLogout();
+
+    await DataManager.initializeData(); // Part 7: tries the PHP API first, falls back to localStorage/sample data
 
     populateSemesterFilterOptions();
-    setupLogout();
     setupFilterListeners();
     setupSortListeners();
     setupExport();
@@ -40,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 
 // ---------------------------------------------------------------
-// Greeting & top stat cards
+// Greeting
 // ---------------------------------------------------------------
 function updateGreeting(username) {
     const greetingElement = document.getElementById('greeting');
@@ -48,14 +54,23 @@ function updateGreeting(username) {
 
     const hour = new Date().getHours();
     let timeOfDay = '';
-    if (hour >= 5 && hour < 12) timeOfDay = 'Good Morning';
-    else if (hour >= 12 && hour < 17) timeOfDay = 'Good Afternoon';
-    else if (hour >= 17 && hour < 21) timeOfDay = 'Good Evening';
-    else timeOfDay = 'Good Night';
+
+    if (hour >= 5 && hour < 12) {
+        timeOfDay = 'Good Morning';
+    } else if (hour >= 12 && hour < 17) {
+        timeOfDay = 'Good Afternoon';
+    } else if (hour >= 17 && hour < 21) {
+        timeOfDay = 'Good Evening';
+    } else {
+        timeOfDay = 'Good Night';
+    }
 
     greetingElement.textContent = `${timeOfDay}, ${username}!`;
 }
 
+// ---------------------------------------------------------------
+// Stat cards — now driven by DataManager instead of hardcoded values
+// ---------------------------------------------------------------
 function updateStatistics() {
     const stats = DataManager.getGradeStatistics();
     const semesterSummary = DataManager.getSemesterSummary();
@@ -71,26 +86,21 @@ function updateStatistics() {
     ];
 
     cards.forEach((card, index) => {
-        const titleEl = document.getElementById(`stat${index + 1}-title`);
-        const valueEl = document.getElementById(`stat${index + 1}-value`);
-        if (titleEl) titleEl.textContent = `${card.icon} ${card.title}`;
-        if (valueEl) {
-            valueEl.textContent = card.value;
-            valueEl.className = `card-text fw-bold ${card.color}`;
+        const titleElement = document.getElementById(`stat${index + 1}-title`);
+        const valueElement = document.getElementById(`stat${index + 1}-value`);
+
+        if (titleElement) {
+            titleElement.textContent = `${card.icon} ${card.title}`;
+        }
+        if (valueElement) {
+            valueElement.textContent = card.value;
+            valueElement.className = `card-text fw-bold ${card.color}`;
         }
     });
-
-    const gpaElement = document.getElementById('stat1-value');
-    if (gpaElement) {
-        gpaElement.className = 'card-text fw-bold';
-        if (overallGpa >= 3.0) gpaElement.classList.add('text-success');
-        else if (overallGpa >= 2.0) gpaElement.classList.add('text-warning');
-        else gpaElement.classList.add('text-danger');
-    }
 }
 
 // ---------------------------------------------------------------
-// Filters, Search
+// Filters & Search (Lab 4)
 // ---------------------------------------------------------------
 function populateSemesterFilterOptions() {
     const select = document.getElementById('semesterFilter');
@@ -154,7 +164,7 @@ function setupFilterListeners() {
 }
 
 // ---------------------------------------------------------------
-// Table rendering
+// Table: filtering + sorting + rendering
 // ---------------------------------------------------------------
 function getFilteredSortedData() {
     let data = DataManager.applyFilters(state);
@@ -181,6 +191,10 @@ function getFilteredSortedData() {
     return data;
 }
 
+function populateActivityTable() {
+    renderTable();
+}
+
 function renderTable() {
     const tableBody = document.getElementById('activityTableBody');
     if (!tableBody) return;
@@ -191,28 +205,31 @@ function renderTable() {
 
     if (filtered.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No matching records.</td></tr>';
-    } else {
-        filtered.forEach(activity => {
-            const row = document.createElement('tr');
-            let badgeClass = 'bg-secondary';
-            if (activity.status === 'success') badgeClass = 'bg-success';
-            else if (activity.status === 'warning') badgeClass = 'bg-warning text-dark';
-            else if (activity.status === 'danger') badgeClass = 'bg-danger';
-            else if (activity.status === 'info') badgeClass = 'bg-info text-dark';
-
-            if (activity.grade < DataManager.LOW_GRADE_THRESHOLD) {
-                row.classList.add('low-grade-row');
-            }
-
-            row.innerHTML = `
-                <td>${activity.date}</td>
-                <td>${activity.activity}</td>
-                <td><span class="badge ${badgeClass}">${activity.status}</span></td>
-                <td>${activity.grade}</td>
-            `;
-            tableBody.appendChild(row);
-        });
+        return;
     }
+
+    filtered.forEach(activity => {
+        const row = document.createElement('tr');
+
+        let badgeClass = 'bg-secondary';
+        if (activity.status === 'success') badgeClass = 'bg-success';
+        else if (activity.status === 'warning') badgeClass = 'bg-warning text-dark';
+        else if (activity.status === 'danger') badgeClass = 'bg-danger';
+        else if (activity.status === 'info') badgeClass = 'bg-info text-dark';
+
+        if (activity.grade < DataManager.LOW_GRADE_THRESHOLD) {
+            row.classList.add('low-grade-row');
+        }
+
+        row.innerHTML = `
+            <td>${activity.date}</td>
+            <td>${activity.activity}</td>
+            <td><span class="badge ${badgeClass}">${activity.status}</span></td>
+            <td>${activity.grade}</td>
+        `;
+
+        tableBody.appendChild(row);
+    });
 }
 
 function setupSortListeners() {
@@ -234,7 +251,7 @@ function setupSortListeners() {
 }
 
 // ---------------------------------------------------------------
-// Alerts
+// Alerts (Lab 4)
 // ---------------------------------------------------------------
 function showAlerts() {
     const alertSection = document.getElementById('alertSection');
@@ -268,7 +285,7 @@ function showAlerts() {
 }
 
 // ---------------------------------------------------------------
-// Export
+// CSV Export (Lab 4)
 // ---------------------------------------------------------------
 function setupExport() {
     const exportBtn = document.getElementById('exportBtn');
@@ -281,7 +298,7 @@ function setupExport() {
 }
 
 // ---------------------------------------------------------------
-// Real-time simulation
+// Real-time simulation + toast (Lab 4)
 // ---------------------------------------------------------------
 function setupRealTimeSimulation() {
     setInterval(async () => {
@@ -303,10 +320,10 @@ function showToast(message) {
 }
 
 // ---------------------------------------------------------------
-// Logout
+// Logout — same IDs as Lab 3 (top navbar button + sidebar link)
 // ---------------------------------------------------------------
 function setupLogout() {
-    const logoutBtn = document.getElementById('logoutBtnNav');
+    const logoutBtn = document.getElementById('logoutBtn');
     const logoutLink = document.getElementById('logoutLink');
 
     function performLogout(e) {
@@ -316,43 +333,12 @@ function setupLogout() {
         window.location.href = 'index.html';
     }
 
-    if (logoutBtn) logoutBtn.addEventListener('click', performLogout);
-    if (logoutLink) logoutLink.addEventListener('click', performLogout);
-}
-
-// ---------------------------------------------------------------
-// Recent Activity — a simple, unfiltered feed of the latest records
-// (separate from the big filterable Activity Table below it)
-// ---------------------------------------------------------------
-function renderRecentActivity() {
-    const container = document.getElementById('recentActivityList');
-    if (!container) return;
-
-    const recent = [...DataManager.getActivities()]
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 5);
-
-    if (recent.length === 0) {
-        container.innerHTML = '<li class="list-group-item text-muted">No recent activity.</li>';
-        return;
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', performLogout);
     }
-
-    container.innerHTML = recent.map(a => {
-        let cls = 'bg-secondary';
-        if (a.status === 'success') cls = 'bg-success';
-        else if (a.status === 'warning') cls = 'bg-warning text-dark';
-        else if (a.status === 'danger') cls = 'bg-danger';
-        else if (a.status === 'info') cls = 'bg-info text-dark';
-
-        return `
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="fw-semibold">${a.activity}</div>
-                    <small class="text-muted">${a.date}</small>
-                </div>
-                <span class="badge ${cls}">${a.status}</span>
-            </li>`;
-    }).join('');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', performLogout);
+    }
 }
 
 // ---------------------------------------------------------------
@@ -360,7 +346,6 @@ function renderRecentActivity() {
 // ---------------------------------------------------------------
 function refreshDashboard() {
     updateStatistics();
-    renderRecentActivity();
     renderTable();
     showAlerts();
     Charts.renderAllCharts();

@@ -1,3 +1,7 @@
+/* ============================================================
+   dataManager.js
+   Data Management Module for the Student Grade Portal Dashboard
+   ============================================================ */
 
 const LOW_GRADE_THRESHOLD = 75;   // equivalent of "reorder level" for low stock
 const STORAGE_KEY = 'portalActivities';
@@ -5,7 +9,13 @@ const API_URL = 'api/student.php';
 
 let activities = [];
 
-
+/**
+ * initializeData()
+ * Part 7 of the lab: fetch from the PHP API first.
+ * Falls back to localStorage, then to hardcoded sample data,
+ * so the dashboard still works even if you open it without
+ * running it through XAMPP/Apache.
+ */
 async function initializeData() {
     try {
         const response = await fetch(API_URL, { cache: 'no-store' });
@@ -157,7 +167,13 @@ function downloadCSV(csvContent, filename) {
     URL.revokeObjectURL(url);
 }
 
-
+// ---- Real-time simulation ----
+/**
+ * simulateUpdate()
+ * Nudges one activity's grade and pushes the change to the PHP API
+ * (Part 7, Step 3: "Implement Write Operations"), falling back to
+ * local-only if the API isn't reachable.
+ */
 async function simulateUpdate() {
     if (activities.length === 0) return null;
     const index = Math.floor(Math.random() * activities.length);
