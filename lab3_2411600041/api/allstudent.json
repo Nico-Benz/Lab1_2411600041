@@ -67,8 +67,8 @@
         "id": 9,
         "date": "2026-08-08",
         "activity": "Assignment 4 - Networking",
-        "status": "danger",
-        "grade": 72,
+        "status": "warning",
+        "grade": 75,
         "semester": 2
     },
     {
@@ -108,7 +108,7 @@
         "date": "2026-08-04",
         "activity": "Attendance recorded - Data Structure",
         "status": "info",
-        "grade": 89,
+        "grade": 88,
         "semester": 2
     },
     {
@@ -116,7 +116,7 @@
         "date": "2026-07-29",
         "activity": "Assignment: Big Data - Advance Database System",
         "status": "danger",
-        "grade": 75,
+        "grade": 74,
         "semester": 1
     },
     {
@@ -188,7 +188,7 @@
         "date": "2026-08-27",
         "activity": "Quiz 1 - Web Systems and Technologies",
         "status": "success",
-        "grade": 98,
+        "grade": 95,
         "semester": 2
     },
     {

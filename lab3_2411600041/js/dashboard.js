@@ -1,10 +1,3 @@
-/* ============================================================
-   dashboard.js
-   Student Grade Portal Dashboard
-   Lab 3 base (greeting, logout) + Lab 4 features (data manager,
-   charts, filtering, search, sorting, export, real-time updates)
-   Depends on: dataManager.js, charts.js (both loaded before this file)
-   ============================================================ */
 
 const state = {
     search: '',
@@ -45,9 +38,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     refreshDashboard();
 });
 
-// ---------------------------------------------------------------
+
 // Greeting
-// ---------------------------------------------------------------
+
 function updateGreeting(username) {
     const greetingElement = document.getElementById('greeting');
     if (!greetingElement) return;
@@ -68,9 +61,9 @@ function updateGreeting(username) {
     greetingElement.textContent = `${timeOfDay}, ${username}!`;
 }
 
-// ---------------------------------------------------------------
+
 // Stat cards — now driven by DataManager instead of hardcoded values
-// ---------------------------------------------------------------
+
 function updateStatistics() {
     const stats = DataManager.getGradeStatistics();
     const semesterSummary = DataManager.getSemesterSummary();
@@ -99,9 +92,9 @@ function updateStatistics() {
     });
 }
 
-// ---------------------------------------------------------------
+
 // Filters & Search (Lab 4)
-// ---------------------------------------------------------------
+
 function populateSemesterFilterOptions() {
     const select = document.getElementById('semesterFilter');
     if (!select) return;
@@ -163,9 +156,9 @@ function setupFilterListeners() {
     }
 }
 
-// ---------------------------------------------------------------
+
 // Table: filtering + sorting + rendering
-// ---------------------------------------------------------------
+
 function getFilteredSortedData() {
     let data = DataManager.applyFilters(state);
 
@@ -250,9 +243,9 @@ function setupSortListeners() {
     });
 }
 
-// ---------------------------------------------------------------
+
 // Alerts (Lab 4)
-// ---------------------------------------------------------------
+
 function showAlerts() {
     const alertSection = document.getElementById('alertSection');
     if (!alertSection) return;

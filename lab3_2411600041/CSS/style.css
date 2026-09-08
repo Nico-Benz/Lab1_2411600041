@@ -140,9 +140,7 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--theme-primary);
 }
-/* ============================================================
-   NEW FOR LAB 4 — added below the original Lab 3 styles
-   ============================================================ */
+/* NEW FOR LAB 4 */
 
 .chart-container {
   position: relative;
