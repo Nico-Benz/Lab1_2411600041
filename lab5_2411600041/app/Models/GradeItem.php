@@ -19,10 +19,7 @@ class GradeItem extends Model
         'status',
     ];
 
-    public function gradeEntries(): HasMany
-    {
-        return $this->hasMany(GradeEntry::class);
-    }
+    
     public function isBelowThreshold(): bool
 {
     return $this->current_grade > 0 && $this->current_grade < $this->low_grade_threshold;

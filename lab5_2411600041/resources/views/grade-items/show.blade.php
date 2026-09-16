@@ -47,36 +47,6 @@
                 </div>
             </div>
         </div>
-
-        @if ($gradeItem->gradeEntries->isNotEmpty())
-            <div class="card stat-card">
-                <div class="card-header">
-                    <h5 class="mb-0">Grade Entries</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Score</th>
-                                <th>Semester</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($gradeItem->gradeEntries as $entry)
-                                <tr>
-                                    <td>{{ $entry->entry_date }}</td>
-                                    <td>{{ $entry->entry_type }}</td>
-                                    <td>{{ $entry->score }}</td>
-                                    <td>{{ $entry->semester }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        @endif
     </div>
 
     <div class="col-md-4">

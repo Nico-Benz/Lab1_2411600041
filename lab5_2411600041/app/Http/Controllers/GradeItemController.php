@@ -52,7 +52,7 @@ class GradeItemController extends Controller
      */
     public function show(GradeItem $gradeItem)
     {
-        $gradeItem->load('gradeEntries');
+    
 
         return view('grade-items.show', compact('gradeItem'));
     }
