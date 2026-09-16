@@ -12,15 +12,15 @@
         "date": "2026-07-25",
         "activity": "Prelim Exam - Quantitative Methods",
         "status": "danger",
-        "grade": 69,
+        "grade": 67,
         "semester": 1
     },
     {
         "id": 3,
         "date": "2026-08-02",
         "activity": "Midterm Activity 1 - Quantitative Methods",
-        "status": "warning",
-        "grade": 79,
+        "status": "info",
+        "grade": 83,
         "semester": 1
     },
     {
@@ -36,7 +36,7 @@
         "date": "2026-08-06",
         "activity": "Midterm Activity 1 - Quantitative Methods",
         "status": "info",
-        "grade": 89,
+        "grade": 86,
         "semester": 1
     },
     {
@@ -52,7 +52,7 @@
         "date": "2026-08-13",
         "activity": "Quiz 3 - Data Structures",
         "status": "success",
-        "grade": 94,
+        "grade": 91,
         "semester": 1
     },
     {
@@ -60,7 +60,7 @@
         "date": "2026-08-10",
         "activity": "Project Proposal Submitted - Database Systems",
         "status": "success",
-        "grade": 97,
+        "grade": 95,
         "semester": 1
     },
     {
@@ -100,7 +100,7 @@
         "date": "2026-08-06",
         "activity": "Finals Grade Released - Web Development",
         "status": "danger",
-        "grade": 65,
+        "grade": 64,
         "semester": 2
     },
     {
@@ -108,7 +108,7 @@
         "date": "2026-08-04",
         "activity": "Attendance recorded - Data Structure",
         "status": "info",
-        "grade": 82,
+        "grade": 83,
         "semester": 2
     },
     {
@@ -132,7 +132,7 @@
         "date": "2026-07-30",
         "activity": "Assignment: Type of Integration - System Integration and Architecture",
         "status": "info",
-        "grade": 88,
+        "grade": 89,
         "semester": 1
     },
     {
@@ -156,7 +156,7 @@
         "date": "2026-07-30",
         "activity": "Seatwork 1 - Web Systems and Technologies",
         "status": "danger",
-        "grade": 68,
+        "grade": 66,
         "semester": 1
     },
     {
@@ -196,7 +196,7 @@
         "date": "2026-09-08",
         "activity": "Lab 4 - Web Systems and Technologies",
         "status": "success",
-        "grade": 99,
+        "grade": 96,
         "semester": 2
     },
     {
@@ -212,7 +212,7 @@
         "date": "2026-08-07",
         "activity": "Computer Laboratory Activity 2 - System Analysis and Design",
         "status": "info",
-        "grade": 86,
+        "grade": 88,
         "semester": 2
     },
     {
@@ -220,7 +220,7 @@
         "date": "2026-09-03",
         "activity": "Computer Laboratory Activity 3 - System Analysis and Design",
         "status": "success",
-        "grade": 90,
+        "grade": 91,
         "semester": 2
     }
 ]

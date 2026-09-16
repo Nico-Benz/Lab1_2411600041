@@ -61,7 +61,7 @@
 <!-- Alert -->
 @if ($belowThresholdCount > 0)
     <div class="alert alert-warning">
-        ⚠ {{ $belowThresholdCount }} subject(s) below threshold — check the Subjects page for details.
+        ⚠ {{ $belowThresholdCount }} subject(s) at risk — check the Subjects page for details.
     </div>
 @endif
 
@@ -92,7 +92,7 @@
                                 @if ($item->isPending())
                                     <span class="badge badge-pending">Pending</span>
                                 @elseif ($item->isBelowThreshold())
-                                    <span class="badge bg-danger">Below Threshold</span>
+                                    <span class="badge bg-danger">At Risk</span>
                                 @else
                                     <span class="badge bg-success">Passed</span>
                                 @endif
@@ -128,7 +128,7 @@
     new Chart(document.getElementById('statusChart'), {
         type: 'doughnut',
         data: {
-            labels: ['Passed', 'Pending', 'Below Threshold'],
+            labels: ['Passed', 'Pending', 'At Risk'],
             datasets: [{ data: [{{ $passedCount }}, {{ $pendingCount }}, {{ $belowThresholdCount }}], backgroundColor: ['#2E8B57', '#E67E22', '#D9534F'] }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Status Distribution' } } }
