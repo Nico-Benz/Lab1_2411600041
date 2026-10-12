@@ -1,0 +1,235 @@
+:root {
+  --bs-primary: #231C35;
+  --bs-primary-rgb: 35, 28, 53;
+  --bs-secondary: #2A2B47;
+  --bs-secondary-rgb: 42, 43, 71;
+  --bs-success: #2E8B57;
+  --bs-info: #6E5774;
+  --bs-warning: #E67E22;
+  --bs-danger: #D9534F;
+
+  /* Custom Theme Colors */
+  --theme-primary: #231C35;
+  --theme-secondary: #2A2B47;
+  --theme-accent: #E67E22;
+  --theme-background: #F5F3F8;
+  --theme-light-accent: #6E5774;
+  --theme-text: #231C35;
+}
+
+body {
+  background: linear-gradient(160deg, #68518d 0%, #863d98 40%, #826a8d 100%);
+  color: var(--theme-text);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  min-height:  100vh;
+}
+
+.login-page {
+  background: linear-gradient(135deg, var(--theme-primary), var(--theme-secondary));
+  min-height: 100vh;
+}
+
+.login-card {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.login-card .card-header {
+  background: linear-gradient(135deg, var(--theme-primary), var(--theme-secondary));
+  border-bottom: none;
+}
+
+.sidebar {
+  background-color: #ffffff;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar .nav-link {
+  color: var(--theme-text);
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 4px;
+  transition: all 0.3s ease;
+}
+
+.sidebar .nav-link:hover {
+  background-color: var(--theme-light-accent);
+  color: var(--theme-primary);
+}
+
+.sidebar .nav-link.active {
+  background-color: var(--theme-primary);
+  color: #ffffff;
+}
+
+.sidebar .nav-link.text-danger:hover {
+  background-color: #f8d7da;
+  color: #dc3545 !important;
+}
+
+.stat-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card .card-body {
+  padding: 1.5rem;
+}
+
+.stat-card .card-title {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card .card-text {
+  font-size: 1.8rem;
+  margin-bottom: 0;
+}
+
+.border-accent {
+  border-left: 4px solid var(--theme-accent);
+}
+
+.btn-primary {
+  background-color: var(--theme-primary);
+  border-color: var(--theme-primary);
+}
+
+.btn-primary:hover {
+  background-color: #1a1527;
+  border-color: #1a1527;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  .stat-card .card-text {
+    font-size: 1.4rem;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--theme-secondary);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-primary);
+}
+/* NEW FOR LAB 4 */
+
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+  padding: 10px;
+}
+
+.chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    height: 240px;
+  }
+}
+
+.low-grade-row {
+  background-color: rgba(217, 83, 79, 0.08);
+}
+
+.low-grade-row:hover {
+  background-color: rgba(217, 83, 79, 0.15);
+}
+
+#searchBox {
+  border: 2px solid var(--theme-light-accent);
+  border-radius: 8px;
+  padding: 6px 12px;
+  max-width: 320px;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+#searchBox:focus {
+  outline: none;
+  border-color: var(--theme-accent);
+  box-shadow: 0 0 8px rgba(230, 126, 34, 0.4);
+}
+
+.toast-container-custom {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1080;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-toast {
+  background: var(--theme-primary, #231C35);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  font-size: 0.9rem;
+  animation: toast-in 0.25s ease;
+}
+
+@keyframes toast-in {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* ===== LAB 5 ADDITIONS ===== */
+
+.content-card {
+  background: #ffffff;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.btn-accent {
+  background-color: var(--theme-accent);
+  border-color: var(--theme-accent);
+  color: #ffffff;
+}
+
+.btn-accent:hover {
+  background-color: #c96a15;
+  border-color: #c96a15;
+  color: #ffffff;
+}
+
+.badge-pending {
+  background-color: var(--theme-accent);
+  color: #ffffff;
+}
