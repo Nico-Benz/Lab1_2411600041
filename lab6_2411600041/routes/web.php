@@ -21,13 +21,16 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::resource('grade-items', GradeItemController::class);
+    Route::resource('grade-items', GradeItemController::class)->except(['index', 'show'])->middleware('can:admin');
+    Route::resource('grade-items', GradeItemController::class)->only(['index', 'show']);
     
     Route::resource('grade-transactions', GradeTransactionController::class)
-        ->only(['index', 'create', 'store', 'show', 'destroy']);
+        ->only(['create', 'store', 'destroy'])->middleware('can:admin');
+    Route::resource('grade-transactions', GradeTransactionController::class)
+        ->only(['index', 'show']);
     
-    Route::get('/grade-adjustments/create', [GradeAdjustmentController::class, 'create'])->name('grade-adjustments.create');
-    Route::post('/grade-adjustments', [GradeAdjustmentController::class, 'store'])->name('grade-adjustments.store');    
+    Route::get('/grade-adjustments/create', [GradeAdjustmentController::class, 'create'])->middleware('can:admin')->name('grade-adjustments.create');
+    Route::post('/grade-adjustments', [GradeAdjustmentController::class, 'store'])->middleware('can:admin')->name('grade-adjustments.store');   
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
     Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.readAll');
