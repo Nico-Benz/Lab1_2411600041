@@ -6,6 +6,8 @@ use App\Models\GradeItem;
 use App\Models\GradeTransaction;
 use App\Models\User;
 use App\Notifications\LowGradeNotification;
+use App\Mail\LowStockAlert;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use InvalidArgumentException;
 
@@ -48,6 +50,12 @@ class GradeTransactionObserver
 
         if ($isAtRisk && ! $wasAtRisk) {
             Notification::send(User::all(), new LowGradeNotification($item));
+
+            // Email din sa mga admin at manager (LowStockAlert, Part 4)
+            $emails = User::whereIn('role', ['admin', 'manager'])->pluck('email')->all();
+            if (! empty($emails)) {
+                Mail::to($emails)->send(new LowStockAlert($item));
+            }
         }
     }
 

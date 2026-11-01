@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Mail\PurchaseOrderApproved;
+use App\Mail\PurchaseOrderCreated;
+use App\Mail\PurchaseOrderSent;
+use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 
 class PurchaseOrderController extends Controller
 {
@@ -118,6 +123,10 @@ class PurchaseOrderController extends Controller
             return $order;
         });
 
+        if ($order->status === 'pending') {
+            $this->notifyApprovers($order);
+        }
+
         return redirect()->route('purchase-orders.show', $order)
             ->with('success', 'Purchase order ' . $order->reference_number . ' created.');
     }
@@ -212,6 +221,11 @@ class PurchaseOrderController extends Controller
             $purchaseOrder->calculateTotal();
         });
 
+        // Kung na-submit na for approval, ipaalam sa mga approver
+        if ($purchaseOrder->status === 'pending') {
+            $this->notifyApprovers($purchaseOrder);
+        }
+
         return redirect()->route('purchase-orders.show', $purchaseOrder)
             ->with('success', 'Purchase order updated.');
     }
@@ -250,6 +264,12 @@ class PurchaseOrderController extends Controller
             'approved_by' => Auth::id(),
             'approved_at' => now(),
         ]);
+
+        // Ipaalam sa gumawa ng PO na na-approve na
+        $creatorEmail = $purchaseOrder->createdBy?->email;
+        if ($creatorEmail) {
+            Mail::to($creatorEmail)->send(new PurchaseOrderApproved($purchaseOrder));
+        }
 
         return redirect()->route('purchase-orders.show', $purchaseOrder)
             ->with('success', 'Purchase order approved.');
@@ -294,6 +314,12 @@ class PurchaseOrderController extends Controller
         }
 
         $purchaseOrder->update(['status' => 'sent']);
+
+        // I-email ang PO sa supplier (instructor)
+        $supplierEmail = $purchaseOrder->supplier?->email;
+        if ($supplierEmail) {
+            Mail::to($supplierEmail)->send(new PurchaseOrderSent($purchaseOrder));
+        }
 
         return redirect()->route('purchase-orders.show', $purchaseOrder)
             ->with('success', 'Purchase order marked as sent.');
@@ -364,5 +390,17 @@ class PurchaseOrderController extends Controller
 
         return redirect()->route('purchase-orders.show', $purchaseOrder)
             ->with('success', 'Items received and grades updated.');
+    }
+
+    /**
+     * Ipaalam sa mga admin at manager na may PO na naghihintay ng approval.
+     */
+    private function notifyApprovers(PurchaseOrder $order): void
+    {
+        $emails = User::whereIn('role', ['admin', 'manager'])->pluck('email')->all();
+
+        if (! empty($emails)) {
+            Mail::to($emails)->send(new PurchaseOrderCreated($order));
+        }
     }
 }
