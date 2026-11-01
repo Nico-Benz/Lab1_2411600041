@@ -4,9 +4,12 @@
 
 <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
     <h2>Suppliers</h2>
+    <div class="d-flex gap-2">
+        <a href="{{ route('reports.suppliers') }}" class="btn btn-outline-light">Performance Report</a>
     @can('admin')
         <a href="{{ route('suppliers.create') }}" class="btn" style="background-color: var(--theme-accent); color: white;">+ Add Supplier</a>
     @endcan
+    </div>
 </div>
 
 <!-- Search, Filter and Sort -->

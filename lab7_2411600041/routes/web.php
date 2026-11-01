@@ -10,6 +10,7 @@ use App\Http\Controllers\GradeItemController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\SupplierReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -34,6 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/grade-adjustments/create', [GradeAdjustmentController::class, 'create'])->middleware('can:admin')->name('grade-adjustments.create');
     Route::post('/grade-adjustments', [GradeAdjustmentController::class, 'store'])->middleware('can:admin')->name('grade-adjustments.store');   
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/suppliers', [SupplierReportController::class, 'index'])->name('reports.suppliers');
 
     Route::resource('suppliers', SupplierController::class)->except(['index', 'show'])->middleware('can:admin');
     Route::resource('suppliers', SupplierController::class)->only(['index', 'show']);
