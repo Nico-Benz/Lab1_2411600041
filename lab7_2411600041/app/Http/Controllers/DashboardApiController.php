@@ -7,6 +7,7 @@ use App\Http\Resources\GradeTransactionResource;
 use App\Models\GradeItem;
 use App\Models\GradeTransaction;
 use App\Support\DashboardStats;
+use App\Support\ProcurementWidgets;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -47,5 +48,48 @@ class DashboardApiController extends Controller
             ->get();
 
         return GradeTransactionResource::collection($transactions);
+    }
+
+    public function pendingOrders(): JsonResponse
+    {
+        return response()->json([
+            'count' => ProcurementWidgets::pendingCount(),
+        ]);
+    }
+
+    public function recentOrders(): JsonResponse
+    {
+        $orders = ProcurementWidgets::recentOrders()->map(fn ($po) => [
+            'id' => $po->id,
+            'reference_number' => $po->reference_number,
+            'supplier' => $po->supplier?->company_name ?? '—',
+            'status' => $po->status,
+            'total' => (float) $po->total,
+            'url' => route('purchase-orders.show', $po),
+        ]);
+
+        return response()->json(['orders' => $orders]);
+    }
+
+    public function supplierPerformance(): JsonResponse
+    {
+        $suppliers = ProcurementWidgets::topSuppliers()->map(fn ($row) => [
+            'id' => $row['id'],
+            'name' => $row['name'],
+            'rating' => $row['rating'],
+            'url' => route('suppliers.show', $row['id']),
+        ]);
+
+        return response()->json(['suppliers' => $suppliers]);
+    }
+
+    public function reorderAlerts(): JsonResponse
+    {
+        $alerts = ProcurementWidgets::reorderAlerts();
+
+        return response()->json([
+            'count' => $alerts->count(),
+            'alerts' => $alerts,
+        ]);
     }
 }

@@ -42,8 +42,27 @@
         </div>
     </div>
 </div>
+<!-- Procurement Widgets -->
+<h4 class="mb-3">Procurement Overview</h4>
+<div class="row mb-2">
+    <div class="col-md-3 mb-3">
+        @include('widgets.pending-orders')
+    </div>
+    <div class="col-md-5 mb-3">
+        @include('widgets.recent-orders')
+    </div>
+    <div class="col-md-4 mb-3">
+        @include('widgets.supplier-performance')
+    </div>
+</div>
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        @include('widgets.reorder-alerts')
+    </div>
+</div>
 
 <!-- Charts -->
+
 <div class="row mb-4">
     <div class="col-md-6 mb-3">
         <div class="card"><div class="card-body chart-container"><canvas id="performanceChart"></canvas></div></div>

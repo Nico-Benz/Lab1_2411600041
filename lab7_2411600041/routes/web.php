@@ -52,6 +52,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/stats', [DashboardApiController::class, 'stats'])->name('dashboard.stats');
     Route::get('/grade-items/at-risk', [DashboardApiController::class, 'atRisk'])->name('grade-items.at-risk');
     Route::get('/transactions/recent', [DashboardApiController::class, 'recentTransactions'])->name('transactions.recent');
+
+    Route::get('/dashboard/pending-orders', [DashboardApiController::class, 'pendingOrders'])->name('dashboard.pending-orders');
+    Route::get('/dashboard/recent-orders', [DashboardApiController::class, 'recentOrders'])->name('dashboard.recent-orders');
+    Route::get('/dashboard/supplier-performance', [DashboardApiController::class, 'supplierPerformance'])->name('dashboard.supplier-performance');
+    Route::get('/dashboard/reorder-alerts', [DashboardApiController::class, 'reorderAlerts'])->name('dashboard.reorder-alerts');
     });
 });
 
