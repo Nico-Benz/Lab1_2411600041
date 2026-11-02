@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\PurchaseOrder;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -50,6 +51,13 @@ class PurchaseOrderCreated extends Mailable implements ShouldQueue
      */
     public function attachments(): array
     {
-        return [];
+        return [
+            Attachment::fromData(
+                fn () => Pdf::loadView('exports.purchase-order-pdf', [
+                    'order' => $this->purchaseOrder->loadMissing(['supplier', 'createdBy', 'items.product']),
+                ])->output(),
+                $this->purchaseOrder->reference_number . '.pdf'
+            )->withMime('application/pdf'),
+        ];
     }
 }
