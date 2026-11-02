@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -32,6 +34,23 @@ class Supplier extends Model
     public function products(): HasMany
     {
         return $this->hasMany(GradeItem::class);
+    }
+
+    /**
+     * Many-to-many: mga subject na puwedeng ituro ng instructor na ito
+     * bilang alternate. Ginagamit ang pivot table na grade_item_supplier.
+     */
+    public function alternateItems(): BelongsToMany
+    {
+        return $this->belongsToMany(GradeItem::class, 'grade_item_supplier')
+            ->withPivot('is_preferred')
+            ->withTimestamps();
+    }
+
+    // Mga sticky note na nakadikit sa supplier na ito
+       public function notes(): MorphMany
+    {
+        return $this->morphMany(Note::class, 'noteable');
     }
 
     public function purchaseOrders(): HasMany

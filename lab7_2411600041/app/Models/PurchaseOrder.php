@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class PurchaseOrder extends Model
 {
@@ -57,6 +58,12 @@ class PurchaseOrder extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+        // Mga sticky note na nakadikit sa purchase order na ito
+    // (stickyNotes ang pangalan dahil may notes column na ang table)
+    public function stickyNotes(): MorphMany
+    {
+        return $this->morphMany(Note::class, 'noteable');
     }
 
     // ---------- Query scopes ----------

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -24,6 +25,17 @@ class GradeItem extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    /**
+     * Many-to-many: mga alternate supplier (instructor) ng subject na ito.
+     * Ginagamit ang pivot table na grade_item_supplier.
+     */
+    public function alternateSuppliers(): BelongsToMany
+    {
+        return $this->belongsToMany(Supplier::class, 'grade_item_supplier')
+            ->withPivot('is_preferred')
+            ->withTimestamps();
     }
 
     public function transactions(): HasMany
