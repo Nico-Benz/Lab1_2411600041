@@ -1,59 +1,59 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Student Grade Portal - Lab 7
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Advanced MVC Architecture with Laravel: Automated Inventory Replenishment and Supplier Management System.
 
-## About Laravel
+Built by Nico Benz A. Sasing (2411600041) for Web Systems and Technologies. This is the continuation of the Student Grade Portal from Lab 5 and Lab 6.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## How the Lab 7 words map to this project
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Lab 7 term     | In this project                                                                     |
+| -------------- | ----------------------------------------------------------------------------------- |
+| Product        | Grade item (a subject)                                                              |
+| Supplier       | Instructor                                                                          |
+| Purchase Order | Remedial request sent to the instructor for an At Risk subject                      |
+| Order quantity | Points the grade needs to recover                                                   |
+| Unit price     | Fee per point (default 50)                                                          |
+| Reorder point  | Grade level that triggers an automatic request                                      |
+| Receive items  | Instructor completes the remedial work, and a grade increase transaction is created |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## New features in Lab 7
 
-## Learning Laravel
+- **Supplier module:** create, view, edit and soft delete suppliers. Deleted suppliers are hidden from lists but kept in the database, and can be restored.
+- **Purchase Order system:** PO items, auto reference numbers (PO-YYYYMMDD-0001), statuses (draft, pending, approved, rejected, sent, received, cancelled), approval history, and a PurchaseOrderPolicy for role-based rules.
+- **Automated reorder:** ReorderService computes the reorder point from recent usage and creates purchase orders. Command: `php artisan inventory:check-reorder`. It is scheduled daily at 6:00 AM (Asia/Manila) in `routes/console.php`.
+- **Email notifications:** four Mailables (created, approved, sent, low stock alert) with email templates. The PO PDF is attached to the created email.
+- **Procurement dashboard:** widgets fed by View Composers, API endpoints, and 60-second query caching.
+- **Supplier performance:** SupplierPerformanceService and a report page with charts (`/reports/suppliers`).
+- **Search and filtering:** scopeFilter on models, SearchService, and a reusable filter form component.
+- **Exports:** CSV and PDF (barryvdh/laravel-dompdf) through ExportService and ExportController.
+- **Advanced Eloquent relationships:** many-to-many (`grade_item_supplier` pivot table) and polymorphic (`notes` table used by Supplier and PurchaseOrder).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Roles
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+admin, manager, staff and viewer. The `admin` Gate is in `AppServiceProvider`. Purchase order rules are in `app/Policies/PurchaseOrderPolicy.php`.
 
-## Laravel Sponsors
+## How to run
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+1. Install PHP 8.2+, Composer, and XAMPP (start MySQL).
+2. Copy `.env.example` to `.env` and set `DB_DATABASE=lab7_2411600041`.
+3. Create the database `lab7_2411600041` in phpMyAdmin.
+4. Run these commands:
 
-### Premium Partners
+```
+composer install
+php artisan key:generate
+php artisan migrate --seed
+php artisan serve --port=8002
+php artisan queue:work
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+5. Open http://127.0.0.1:8002
 
-## Contributing
+## Notes
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Emails use `MAIL_MAILER=log`, so they are written to `storage/logs/laravel.log`.
+- Queue driver is `database`, so `php artisan queue:work` must be running to send emails and bell notifications.
+- Supplier performance measures delivered quantities (received vs ordered), not item accuracy.
+- The Subjects page keeps its own JavaScript filter. The server-side filter form is used on the Purchase Orders and Transactions pages.
+- The `.env` file is not committed.
+- `php artisan migrate --seed` creates the Test Admin account and the subjects only. Suppliers, purchase orders and the other test users are not seeded, so they must be added in the app.
