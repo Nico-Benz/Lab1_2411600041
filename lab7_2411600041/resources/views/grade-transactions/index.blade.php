@@ -33,6 +33,17 @@
 
 <x-filter-form :action="route('grade-transactions.index')" :fields="$filterFields" />
 
+<div class="d-flex justify-content-end gap-2 mb-3">
+    <a href="{{ route('exports.download', ['report' => 'transactions', 'format' => 'csv'] + request()->query()) }}"
+       class="btn btn-sm btn-outline-light">
+        <i class="bi bi-filetype-csv me-1"></i>Export CSV
+    </a>
+    <a href="{{ route('exports.download', ['report' => 'transactions', 'format' => 'pdf'] + request()->query()) }}"
+       class="btn btn-sm btn-outline-light">
+        <i class="bi bi-file-earmark-pdf me-1"></i>Export PDF
+    </a>
+</div>
+
 <div class="card">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">

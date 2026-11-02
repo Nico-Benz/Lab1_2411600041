@@ -4,7 +4,15 @@
 
 <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
     <h2>Supplier Performance Report</h2>
-    <a href="{{ route('suppliers.index') }}" class="btn btn-outline-secondary">Back to Suppliers</a>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ route('exports.download', ['report' => 'supplier-performance', 'format' => 'csv']) }}" class="btn btn-outline-light">
+            <i class="bi bi-filetype-csv me-1"></i>CSV
+        </a>
+        <a href="{{ route('exports.download', ['report' => 'supplier-performance', 'format' => 'pdf']) }}" class="btn btn-outline-light">
+            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+        </a>
+        <a href="{{ route('suppliers.index') }}" class="btn btn-outline-secondary">Back to Suppliers</a>
+    </div>
 </div>
 
 <!-- Summary Table -->
