@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\GradeItem;
 use App\Models\GradeTransaction;
+use App\Models\User;
+use App\Services\SearchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -14,28 +16,18 @@ class GradeTransactionController extends Controller
 {
     public const TYPES = ['increase', 'decrease', 'adjustment'];
 
-    public function index(Request $request)
+    public function index(Request $request, SearchService $search)
     {
-        $query = GradeTransaction::with(['gradeItem', 'user'])->recent();
-
-        if ($request->filled('grade_item_id')) {
-            $query->where('grade_item_id', $request->grade_item_id);
-        }
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        $transactions = $query->paginate(20)->withQueryString();
+// Ang SearchService ang naghahanap (gamit ang scopeFilter ng GradeTransaction)
+$transactions = $search->transactions(
+    $request->only(['grade_item_id', 'type', 'user_id', 'date_from', 'date_to']),
+    20
+);
+$users = User::orderBy('name')->get();
         $gradeItems = GradeItem::orderBy('subject_code')->get();
         $types = self::TYPES;
-
-        return view('grade-transactions.index', compact('transactions', 'gradeItems', 'types'));
+        
+return view('grade-transactions.index', compact('transactions', 'gradeItems', 'types', 'users'));
     }
 
     public function create()

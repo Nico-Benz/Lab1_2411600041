@@ -16,6 +16,7 @@ use App\Mail\PurchaseOrderCreated;
 use App\Mail\PurchaseOrderSent;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
+use App\Services\SearchService;
 
 class PurchaseOrderController extends Controller
 {
@@ -23,29 +24,13 @@ class PurchaseOrderController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request, SearchService $search)
     {
         $this->authorize('viewAny', PurchaseOrder::class);
-        // Eager loading: kinukuha agad ang supplier at creator ng bawat PO
-        $query = PurchaseOrder::with(['supplier', 'createdBy']);
-
-        if ($request->filled('status')) {
-            $query->byStatus($request->status);
-        }
-
-        if ($request->filled('supplier_id')) {
-            $query->where('supplier_id', $request->supplier_id);
-        }
-
-        if ($request->filled('from')) {
-            $query->whereDate('order_date', '>=', $request->from);
-        }
-
-        if ($request->filled('to')) {
-            $query->whereDate('order_date', '<=', $request->to);
-        }
-
-        $orders = $query->latest('order_date')->latest('id')->paginate(10)->withQueryString();
+        // Ang SearchService ang naghahanap (gamit ang scopeFilter ng PurchaseOrder)
+        $orders = $search->purchaseOrders(
+            $request->only(['search', 'supplier_id', 'status', 'date_from', 'date_to'])
+        );
 
         // withTrashed: para makita pa rin sa filter ang supplier na na-soft delete pero may lumang PO
         $suppliers = Supplier::withTrashed()->orderBy('company_name')->get();

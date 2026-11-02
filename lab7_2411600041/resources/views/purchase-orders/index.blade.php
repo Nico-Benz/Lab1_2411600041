@@ -2,6 +2,22 @@
 
 @section('content')
 
+@php
+    $supplierOptions = $suppliers->mapWithKeys(fn ($s) => [
+        $s->id => $s->company_name . ($s->trashed() ? ' (deleted)' : ''),
+    ])->all();
+
+    $statusOptions = collect($statuses)->mapWithKeys(fn ($s) => [$s => ucfirst($s)])->all();
+
+    $filterFields = [
+        ['name' => 'search', 'label' => 'Reference', 'type' => 'text', 'col' => 2, 'placeholder' => 'e.g. 0004'],
+        ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'col' => 2, 'options' => $statusOptions],
+        ['name' => 'supplier_id', 'label' => 'Supplier (Instructor)', 'type' => 'select', 'col' => 2, 'options' => $supplierOptions],
+        ['name' => 'date_from', 'label' => 'From', 'type' => 'date', 'col' => 2],
+        ['name' => 'date_to', 'label' => 'To', 'type' => 'date', 'col' => 2],
+    ];
+@endphp
+
 <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
     <h2>Purchase Orders</h2>
     @can('create', App\Models\PurchaseOrder::class)
@@ -10,44 +26,7 @@
 </div>
 
 <!-- Filters -->
-<div class="card mb-3">
-    <div class="card-body">
-        <form method="GET" action="{{ route('purchase-orders.index') }}" class="row g-2 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label small">Status</label>
-                <select name="status" class="form-select">
-                    <option value="">All</option>
-                    @foreach ($statuses as $status)
-                        <option value="{{ $status }}" @selected(request('status') === $status)>{{ ucfirst($status) }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label small">Supplier (Instructor)</label>
-                <select name="supplier_id" class="form-select">
-                    <option value="">All</option>
-                    @foreach ($suppliers as $supplier)
-                        <option value="{{ $supplier->id }}" @selected((string) request('supplier_id') === (string) $supplier->id)>
-                            {{ $supplier->company_name }}{{ $supplier->trashed() ? ' (deleted)' : '' }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">From</label>
-                <input type="date" name="from" value="{{ request('from') }}" class="form-control">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">To</label>
-                <input type="date" name="to" value="{{ request('to') }}" class="form-control">
-            </div>
-            <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn flex-grow-1" style="background-color: var(--theme-primary); color: white;">Apply</button>
-                <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline-secondary">Clear</a>
-            </div>
-        </form>
-    </div>
-</div>
+<x-filter-form :action="route('purchase-orders.index')" :fields="$filterFields" />
 
 <!-- Purchase Orders Table -->
 <div class="card stat-card">

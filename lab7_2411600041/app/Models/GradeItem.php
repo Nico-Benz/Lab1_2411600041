@@ -79,4 +79,26 @@ class GradeItem extends Model
     {
         return $query->where('category', $category);
     }
+
+    public function scopeFilter($query, array $filters)
+    {
+        return $query
+            ->when($filters['search'] ?? null, function ($q, $search) {
+                $q->where(function ($w) use ($search) {
+                    $w->where('subject_name', 'like', "%{$search}%")
+                      ->orWhere('subject_code', 'like', "%{$search}%");
+                });
+            })
+            ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
+            ->when($filters['supplier_id'] ?? null, fn ($q, $supplierId) => $q->where('supplier_id', $supplierId))
+            ->when($filters['status'] ?? null, function ($q, $status) {
+                match ($status) {
+                    'at_risk' => $q->atRisk(),
+                    'pending' => $q->pending(),
+                    'passed' => $q->where('current_grade', '>', 0)
+                        ->whereColumn('current_grade', '>=', 'low_grade_threshold'),
+                    default => null,
+                };
+            });
+    }
 }

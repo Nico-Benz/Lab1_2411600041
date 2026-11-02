@@ -76,6 +76,16 @@ class PurchaseOrder extends Model
         return $query->where('status', $status);
     }
 
+    public function scopeFilter(Builder $query, array $filters): Builder
+    {
+        return $query
+            ->when($filters['search'] ?? null, fn ($q, $search) => $q->where('reference_number', 'like', "%{$search}%"))
+            ->when($filters['supplier_id'] ?? null, fn ($q, $supplierId) => $q->where('supplier_id', $supplierId))
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
+            ->when($filters['date_from'] ?? null, fn ($q, $from) => $q->whereDate('order_date', '>=', $from))
+            ->when($filters['date_to'] ?? null, fn ($q, $to) => $q->whereDate('order_date', '<=', $to));
+    }
+
     // ---------- Helper methods ----------
 
     public function calculateTotal(): float

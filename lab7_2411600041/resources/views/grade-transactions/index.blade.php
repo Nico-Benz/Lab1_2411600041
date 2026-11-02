@@ -1,6 +1,24 @@
 @extends('layouts.grade-app')
 
 @section('content')
+
+@php
+    $subjectOptions = $gradeItems->mapWithKeys(fn ($i) => [
+        $i->id => $i->subject_code . ' - ' . $i->subject_name,
+    ])->all();
+
+    $typeOptions = collect($types)->mapWithKeys(fn ($t) => [$t => ucfirst($t)])->all();
+
+    $userOptions = $users->pluck('name', 'id')->all();
+
+    $filterFields = [
+        ['name' => 'grade_item_id', 'label' => 'Subject', 'type' => 'select', 'col' => 2, 'options' => $subjectOptions],
+        ['name' => 'type', 'label' => 'Type', 'type' => 'select', 'col' => 2, 'options' => $typeOptions],
+        ['name' => 'user_id', 'label' => 'By (User)', 'type' => 'select', 'col' => 2, 'options' => $userOptions],
+        ['name' => 'date_from', 'label' => 'From', 'type' => 'date', 'col' => 2],
+        ['name' => 'date_to', 'label' => 'To', 'type' => 'date', 'col' => 2],
+    ];
+@endphp
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Grade Transactions</h2>
     <div class="d-flex gap-2">
@@ -13,42 +31,7 @@
     </div>
 </div>
 
-<form method="GET" action="{{ route('grade-transactions.index') }}" class="card card-body mb-3">
-    <div class="row g-2 align-items-end">
-        <div class="col-md-3">
-            <label class="form-label small mb-1">Subject</label>
-            <select name="grade_item_id" class="form-select form-select-sm">
-                <option value="">All subjects</option>
-                @foreach ($gradeItems as $item)
-                    <option value="{{ $item->id }}" @selected(request('grade_item_id') == $item->id)>
-                        {{ $item->subject_code }} - {{ $item->subject_name }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small mb-1">Type</label>
-            <select name="type" class="form-select form-select-sm">
-                <option value="">All types</option>
-                @foreach ($types as $type)
-                    <option value="{{ $type }}" @selected(request('type') === $type)>{{ ucfirst($type) }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small mb-1">From</label>
-            <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control form-control-sm">
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small mb-1">To</label>
-            <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control form-control-sm">
-        </div>
-        <div class="col-md-3 d-flex gap-2">
-            <button type="submit" class="btn btn-sm btn-primary">Filter</button>
-            <a href="{{ route('grade-transactions.index') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
-        </div>
-    </div>
-</form>
+<x-filter-form :action="route('grade-transactions.index')" :fields="$filterFields" />
 
 <div class="card">
     <div class="table-responsive">

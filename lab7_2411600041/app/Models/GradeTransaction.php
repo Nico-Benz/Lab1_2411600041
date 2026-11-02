@@ -45,4 +45,14 @@ class GradeTransaction extends Model
     {
         return $query->orderByDesc('created_at');
     }
+
+    public function scopeFilter($query, array $filters)
+    {
+        return $query
+            ->when($filters['grade_item_id'] ?? null, fn ($q, $itemId) => $q->where('grade_item_id', $itemId))
+            ->when($filters['type'] ?? null, fn ($q, $type) => $q->where('type', $type))
+            ->when($filters['user_id'] ?? null, fn ($q, $userId) => $q->where('user_id', $userId))
+            ->when($filters['date_from'] ?? null, fn ($q, $from) => $q->whereDate('created_at', '>=', $from))
+            ->when($filters['date_to'] ?? null, fn ($q, $to) => $q->whereDate('created_at', '<=', $to));
+    }
 }
