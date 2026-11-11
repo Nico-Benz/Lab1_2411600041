@@ -2,43 +2,48 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\GradeItem;
-use Illuminate\Http\Request;
+use App\Models\Brand;
+use App\Models\Category;
+use App\Models\InventoryTransaction;
+use App\Models\Product;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $allItems = GradeItem::all();
-        $gradedItems = $allItems->where('current_grade', '>', 0);
+        $allProducts = Product::all();
 
-        $totalSubjects = $allItems->count();
-        $averageGrade = $gradedItems->avg('current_grade') ?? 0;
-        $passedCount = $gradedItems->filter(fn ($item) => !$item->isBelowThreshold())->count();
-        $pendingCount = $allItems->filter(fn ($item) => $item->isPending())->count();
-        $belowThresholdCount = $allItems->filter(fn ($item) => $item->isBelowThreshold())->count();
+        $totalProducts = $allProducts->count();
+        $lowStockCount = $allProducts->filter(fn ($p) => $p->isLowStock())->count();
+        $outOfStockCount = $allProducts->filter(fn ($p) => $p->isOutOfStock())->count();
+        $inventoryValue = $allProducts->sum(fn ($p) => $p->quantity * $p->unit_price);
 
-        $totalUnits = $allItems->sum('units');
-        $completedUnits = $gradedItems->sum('units');
-        $completionRate = $totalUnits > 0 ? round(($completedUnits / $totalUnits) * 100, 1) : 0;
+        // Newest products
+        $recentProducts = Product::with('category')->orderBy('created_at', 'desc')->orderBy('id', 'desc')->take(5)->get();
 
-        $categoryDistribution = $allItems->groupBy('category')->map->count();
+        // Products at or below their reorder level (includes out of stock)
+        $lowStockProducts = Product::whereColumn('quantity', '<=', 'reorder_level')
+            ->orderBy('quantity')->take(5)->get();
 
-        $recentItems = GradeItem::orderBy('updated_at', 'desc')->take(6)->get();
+        $brands = Brand::withCount('products')->orderBy('name')->get();
+        $categories = Category::withCount('products')->orderBy('name')->get();
+
+        $recentTransactions = InventoryTransaction::with(['product', 'user'])->latest()->orderByDesc('id')->take(5)->get();
 
         $hour = now()->format('H');
         $greeting = $hour < 12 ? 'Good Morning' : ($hour < 18 ? 'Good Afternoon' : 'Good Evening');
 
         return view('dashboard', compact(
             'greeting',
-            'totalSubjects',
-            'averageGrade',
-            'passedCount',
-            'pendingCount',
-            'belowThresholdCount',
-            'completionRate',
-            'categoryDistribution',
-            'recentItems'
+            'totalProducts',
+            'lowStockCount',
+            'outOfStockCount',
+            'inventoryValue',
+            'recentProducts',
+            'lowStockProducts',
+            'brands',
+            'categories',
+            'recentTransactions'
         ));
     }
 }
