@@ -4,7 +4,6 @@
 
 <div class="d-flex justify-content-between flex-wrap align-items-center pb-2 mb-3 border-bottom">
     <h2 id="greeting">{{ $greeting }}, {{ Auth::user()->name }}!</h2>
-    <a href="{{ route('products.create') }}" class="btn" style="background-color: var(--theme-accent); color: white;">+ Add Product</a>
 </div>
 
 <!-- Widgets -->
