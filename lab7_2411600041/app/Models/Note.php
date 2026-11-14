@@ -8,15 +8,17 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Note extends Model
 {
-    protected $fillable = ['user_id', 'body'];
+    protected $fillable = [
+        'user_id',
+        'body',
+    ];
 
-    // Saan nakadikit ang note? (Supplier o PurchaseOrder)
+    /** The Supplier or PurchaseOrder this note belongs to */
     public function noteable(): MorphTo
     {
         return $this->morphTo();
     }
 
-    // Sino ang sumulat ng note?
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

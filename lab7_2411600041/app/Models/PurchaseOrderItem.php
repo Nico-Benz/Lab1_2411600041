@@ -9,40 +9,40 @@ class PurchaseOrderItem extends Model
 {
     protected $fillable = [
         'purchase_order_id',
-        'grade_item_id',
-        'quantity_ordered',
+        'product_id',
+        'quantity',
         'unit_price',
-        'quantity_received',
+        'received_quantity',
     ];
 
-    protected $casts = [
-        'quantity_ordered' => 'decimal:2',
-        'unit_price' => 'decimal:2',
-        'quantity_received' => 'decimal:2',
-    ];
-
-    // ---------- Relationships ----------
+    protected function casts(): array
+    {
+        return [
+            'quantity' => 'integer',
+            'received_quantity' => 'integer',
+            'unit_price' => 'decimal:2',
+        ];
+    }
 
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);
     }
 
-    // "Product" natin ay GradeItem (subject)
     public function product(): BelongsTo
     {
-        return $this->belongsTo(GradeItem::class, 'grade_item_id');
+        return $this->belongsTo(Product::class);
     }
 
-    // ---------- Helper methods ----------
-
+    /** quantity x unit price */
     public function getLineTotalAttribute(): float
     {
-        return (float) $this->quantity_ordered * (float) $this->unit_price;
+        return round((int) $this->quantity * (float) $this->unit_price, 2);
     }
 
-    public function getOutstandingQuantityAttribute(): float
+    /** ordered - received (never below zero) */
+    public function getOutstandingQuantityAttribute(): int
     {
-        return max(0, (float) $this->quantity_ordered - (float) $this->quantity_received);
+        return max(0, (int) $this->quantity - (int) $this->received_quantity);
     }
 }

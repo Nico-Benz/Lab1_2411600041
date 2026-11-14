@@ -2,46 +2,46 @@
 
 namespace App\Exports;
 
-use App\Models\GradeTransaction;
-use Illuminate\Support\Collection;
+use App\Services\SearchService;
+use Illuminate\Http\Request;
 
-class TransactionsExport
+class TransactionsExport implements ReportExport
 {
-    public function __construct(protected array $filters = [])
+    public function __construct(private Request $request)
     {
     }
 
     public function title(): string
     {
-        return 'Grade Transactions';
+        return 'Inventory Transactions';
+    }
+
+    public function filename(): string
+    {
+        return 'transactions-' . now()->format('Ymd-His');
     }
 
     public function headings(): array
     {
-        return [
-            'Date/Time', 'Subject Code', 'Subject Name', 'Type',
-            'Quantity', 'Previous Grade', 'New Grade', 'Reference', 'By', 'Notes',
-        ];
+        return ['Date', 'SKU', 'Product', 'Type', 'Change', 'Before', 'After', 'Reference', 'By'];
     }
 
-    public function rows(): Collection
+    public function rows(): iterable
     {
-        return GradeTransaction::with(['gradeItem', 'user'])
-            ->filter($this->filters)
-            ->recent()
-            ->orderByDesc('id')
-            ->get()
-            ->map(fn (GradeTransaction $t) => [
-                $t->created_at->format('Y-m-d H:i'),
-                $t->gradeItem->subject_code ?? '',
-                $t->gradeItem->subject_name ?? '',
-                ucfirst($t->type),
-                number_format($t->quantity, 2, '.', ''),
-                number_format($t->previous_grade, 2, '.', ''),
-                number_format($t->new_grade, 2, '.', ''),
-                $t->reference_number ?? '',
-                $t->user->name ?? '',
-                $t->notes ?? '',
-            ]);
+        $transactions = (new SearchService)->transactions($this->request)->recent()->get();
+
+        foreach ($transactions as $transaction) {
+            yield [
+                $transaction->created_at->format('Y-m-d H:i'),
+                $transaction->product->sku ?? '',
+                $transaction->product->name ?? '',
+                $transaction->type_label,
+                $transaction->signed_change,
+                $transaction->quantity_before,
+                $transaction->quantity_after,
+                $transaction->reference_number ?? '',
+                $transaction->user->name ?? '',
+            ];
+        }
     }
 }

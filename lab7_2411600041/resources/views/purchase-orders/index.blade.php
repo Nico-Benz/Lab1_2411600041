@@ -1,45 +1,30 @@
-@extends('layouts.grade-app')
+@extends('layouts.inventory-app')
 
 @section('content')
 
-@php
-    $supplierOptions = $suppliers->mapWithKeys(fn ($s) => [
-        $s->id => $s->company_name . ($s->trashed() ? ' (deleted)' : ''),
-    ])->all();
-
-    $statusOptions = collect($statuses)->mapWithKeys(fn ($s) => [$s => ucfirst($s)])->all();
-
-    $filterFields = [
-        ['name' => 'search', 'label' => 'Reference', 'type' => 'text', 'col' => 2, 'placeholder' => 'e.g. 0004'],
-        ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'col' => 2, 'options' => $statusOptions],
-        ['name' => 'supplier_id', 'label' => 'Supplier (Instructor)', 'type' => 'select', 'col' => 2, 'options' => $supplierOptions],
-        ['name' => 'date_from', 'label' => 'From', 'type' => 'date', 'col' => 2],
-        ['name' => 'date_to', 'label' => 'To', 'type' => 'date', 'col' => 2],
-    ];
-@endphp
-
 <div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
     <h2>Purchase Orders</h2>
-    @can('create', App\Models\PurchaseOrder::class)
+    @can('create', \App\Models\PurchaseOrder::class)
         <a href="{{ route('purchase-orders.create') }}" class="btn" style="background-color: var(--theme-accent); color: white;">+ New Purchase Order</a>
     @endcan
 </div>
 
-<!-- Filters -->
-<x-filter-form :action="route('purchase-orders.index')" :fields="$filterFields" />
+@php
+    $filterFields = [
+        ['name' => 'q', 'label' => 'Search', 'type' => 'text', 'col' => 3, 'placeholder' => 'Reference or supplier'],
+        ['name' => 'status', 'label' => 'Status', 'type' => 'select', 'col' => 2, 'placeholder' => 'All statuses',
+            'options' => collect(\App\Models\PurchaseOrder::STATUSES)->mapWithKeys(fn ($s) => [$s => ucfirst($s)])->all()],
+        ['name' => 'supplier_id', 'label' => 'Supplier', 'type' => 'select', 'col' => 3, 'placeholder' => 'All suppliers',
+            'options' => $suppliers->pluck('name', 'id')->all()],
+        ['name' => 'from', 'label' => 'Order date from', 'type' => 'date', 'col' => 2],
+        ['name' => 'to', 'label' => 'To', 'type' => 'date', 'col' => 2],
+    ];
+@endphp
+<x-filter-form :action="route('purchase-orders.index')" :fields="$filterFields">
+    <a href="{{ route('exports.download', ['report' => 'purchase-orders', 'format' => 'csv'] + request()->query()) }}" class="btn btn-outline-secondary">CSV</a>
+    <a href="{{ route('exports.download', ['report' => 'purchase-orders', 'format' => 'pdf'] + request()->query()) }}" class="btn btn-outline-secondary">PDF</a>
+</x-filter-form>
 
-<div class="d-flex justify-content-end gap-2 mb-3">
-    <a href="{{ route('exports.download', ['report' => 'purchase-orders', 'format' => 'csv'] + request()->query()) }}"
-       class="btn btn-sm btn-outline-light">
-        <i class="bi bi-filetype-csv me-1"></i>Export CSV
-    </a>
-    <a href="{{ route('exports.download', ['report' => 'purchase-orders', 'format' => 'pdf'] + request()->query()) }}"
-       class="btn btn-sm btn-outline-light">
-        <i class="bi bi-file-earmark-pdf me-1"></i>Export PDF
-    </a>
-</div>
-
-<!-- Purchase Orders Table -->
 <div class="card stat-card">
     <div class="card-body">
         <div class="table-responsive">
@@ -49,41 +34,41 @@
                         <th>Reference</th>
                         <th>Supplier</th>
                         <th>Order Date</th>
-                        <th>Total</th>
+                        <th>Expected</th>
+                        <th class="text-center">Items</th>
+                        <th class="text-end">Total</th>
                         <th>Status</th>
                         <th>Created By</th>
-                        <th>Actions</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($orders as $order)
-                        @php
-                            $badge = match ($order->status) {
-                                'draft'     => 'bg-secondary',
-                                'pending'   => 'bg-warning text-dark',
-                                'approved'  => 'bg-info text-dark',
-                                'rejected'  => 'bg-danger',
-                                'sent'      => 'bg-primary',
-                                'received'  => 'bg-success',
-                                'cancelled' => 'bg-dark',
-                                default     => 'bg-secondary',
-                            };
-                        @endphp
                         <tr>
-                            <td>{{ $order->reference_number }}</td>
-                            <td>{{ $order->supplier->company_name ?? '—' }}</td>
-                            <td>{{ $order->order_date?->format('M d, Y') }}</td>
-                            <td>₱{{ number_format($order->total, 2) }}</td>
-                            <td><span class="badge {{ $badge }}">{{ ucfirst($order->status) }}</span></td>
-                            <td>{{ $order->createdBy->name ?? '—' }}</td>
+                            <td class="fw-bold">
+                                <a href="{{ route('purchase-orders.show', $order) }}">{{ $order->reference_number }}</a>
+                                @if ($order->is_auto_generated)
+                                    <span class="badge bg-light text-dark border" title="Generated by inventory:check-reorder">Auto</span>
+                                @endif
+                            </td>
                             <td>
+                                {{ $order->supplier->name ?? '—' }}
+                                @if ($order->supplier && $order->supplier->trashed())
+                                    <span class="badge bg-dark">deleted</span>
+                                @endif
+                            </td>
+                            <td>{{ $order->order_date->format('M d, Y') }}</td>
+                            <td>{{ $order->expected_delivery_date ? $order->expected_delivery_date->format('M d, Y') : '—' }}</td>
+                            <td class="text-center">{{ $order->items_count }}</td>
+                            <td class="text-end">₱{{ number_format((float) $order->total, 2) }}</td>
+                            <td><span class="badge bg-{{ $order->status_color }}">{{ ucfirst($order->status) }}</span></td>
+                            <td>{{ $order->createdBy->name ?? '—' }}</td>
+                            <td class="text-end">
                                 <a href="{{ route('purchase-orders.show', $order) }}" class="btn btn-sm btn-outline-secondary">View</a>
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="7" class="text-center text-muted">No purchase orders found.</td>
-                        </tr>
+                        <tr><td colspan="9" class="text-center text-muted">No purchase orders found.</td></tr>
                     @endforelse
                 </tbody>
             </table>

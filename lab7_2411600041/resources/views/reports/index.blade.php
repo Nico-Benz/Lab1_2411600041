@@ -1,179 +1,103 @@
-@extends('layouts.grade-app')
+@extends('layouts.inventory-app')
 
 @section('content')
-<style>
-    @media print {
-        header, .sidebar, .no-print { display: none !important; }
-        main { margin: 0 !important; width: 100% !important; max-width: 100% !important; flex: 0 0 100% !important; }
-    }
-</style>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Reports</h2>
-    <button type="button" class="btn btn-outline-light no-print" onclick="window.print()">
-        <i class="bi bi-printer me-1"></i>Print
-    </button>
+<div class="d-flex justify-content-between align-items-center pb-2 mb-3 border-bottom">
+    <h2>Inventory Reports</h2>
 </div>
 
-<form method="GET" action="{{ route('reports.index') }}" class="card card-body mb-3 no-print">
-    <div class="row g-2 align-items-end">
-        <div class="col-md-3">
-            <label class="form-label small mb-1">From</label>
-            <input type="date" name="date_from" value="{{ $from }}" class="form-control form-control-sm">
-        </div>
-        <div class="col-md-3">
-            <label class="form-label small mb-1">To</label>
-            <input type="date" name="date_to" value="{{ $to }}" class="form-control form-control-sm">
-        </div>
-        <div class="col-md-3 d-flex gap-2">
-            <button type="submit" class="btn btn-sm btn-primary">Generate</button>
-            <a href="{{ route('reports.index') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
-        </div>
+<!-- 1. Stock Movement Report -->
+<div class="card stat-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0">Stock Movement Report</h5>
+        <a href="{{ route('reports.export', ['type' => 'movements', 'from' => $from, 'to' => $to]) }}" class="btn btn-sm btn-outline-secondary">Export CSV</a>
     </div>
-    @if ($errors->any())
-        <div class="text-danger small mt-2">{{ $errors->first() }}</div>
-    @endif
-</form>
-
-<!-- Grade Summary -->
-<div class="card mb-4">
-    <div class="card-header"><h5 class="mb-0">Grade Summary</h5></div>
     <div class="card-body">
-        <div class="row text-center g-3">
-            <div class="col-md-3">
-                <div class="text-muted small">Weighted average</div>
-                <div class="fs-3 fw-bold">{{ number_format($summary['weightedAverage'], 2) }}</div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-muted small">Graded subjects</div>
-                <div class="fs-3 fw-bold">{{ $summary['gradedSubjects'] }}</div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-muted small">Pending subjects</div>
-                <div class="fs-3 fw-bold">{{ $summary['pendingSubjects'] }}</div>
-            </div>
-            <div class="col-md-3">
-                <div class="text-muted small">Units graded</div>
-                <div class="fs-3 fw-bold">{{ $summary['gradedUnits'] }}</div>
-            </div>
-        </div>
-        <hr>
-        <div class="row small">
-            <div class="col-md-6">
-                <span class="text-muted">Highest:</span>
-                @if ($summary['highest'])
-                    <strong>{{ $summary['highest']->subject_code }}</strong> {{ $summary['highest']->subject_name }}
-                    ({{ number_format($summary['highest']->current_grade, 2) }})
-                @else
-                    -
-                @endif
-            </div>
-            <div class="col-md-6">
-                <span class="text-muted">Lowest:</span>
-                @if ($summary['lowest'])
-                    <strong>{{ $summary['lowest']->subject_code }}</strong> {{ $summary['lowest']->subject_name }}
-                    ({{ number_format($summary['lowest']->current_grade, 2) }})
-                @else
-                    -
-                @endif
-            </div>
-        </div>
-        <div class="text-muted small mt-2">
-            The weighted average counts each grade by its units, so a 3-unit subject weighs more than a 1-unit subject. Pending subjects are not included.
+        <form method="GET" action="{{ route('reports.index') }}" class="row g-2 align-items-end mb-3">
+            <div class="col-md-3"><label class="form-label small">From</label><input type="date" name="from" class="form-control" value="{{ $from }}"></div>
+            <div class="col-md-3"><label class="form-label small">To</label><input type="date" name="to" class="form-control" value="{{ $to }}"></div>
+            <div class="col-md-3"><button type="submit" class="btn btn-dark">Generate</button></div>
+        </form>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle">
+                <thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Change</th><th>Balance after</th><th>Reference</th><th>By</th></tr></thead>
+                <tbody>
+                    @forelse ($movements as $t)
+                        <tr>
+                            <td>{{ $t->created_at->format('M d, Y g:i A') }}</td>
+                            <td>{{ $t->product->name ?? '—' }}</td>
+                            <td><span class="badge bg-{{ $t->type_color }}">{{ $t->type_label }}</span></td>
+                            <td class="{{ $t->signed_change >= 0 ? 'text-success' : 'text-danger' }}">{{ $t->signed_change > 0 ? '+' : '' }}{{ $t->signed_change }}</td>
+                            <td>{{ $t->quantity_after }}</td>
+                            <td>{{ $t->reference_number ?? '—' }}</td>
+                            <td>{{ $t->user->name ?? '—' }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="7" class="text-center text-muted">No movements in this date range.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
-<!-- At Risk Report -->
-<div class="card mb-4">
+<!-- 2. Low Stock Report -->
+<div class="card stat-card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">At Risk Report</h5>
-        <span class="badge bg-danger">{{ $atRisk->count() }}</span>
+        <h5 class="mb-0">Low Stock Report</h5>
+        <a href="{{ route('reports.export', ['type' => 'low-stock']) }}" class="btn btn-sm btn-outline-secondary">Export CSV</a>
     </div>
-    <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle mb-0">
-            <thead>
-                <tr class="border-accent">
-                    <th>Code</th>
-                    <th>Subject</th>
-                    <th class="text-end">Grade</th>
-                    <th class="text-end">Threshold</th>
-                    <th class="text-end">Points to reach it</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($atRisk as $item)
-                    <tr>
-                        <td><a href="{{ route('grade-items.show', $item) }}" class="text-decoration-none">{{ $item->subject_code }}</a></td>
-                        <td>{{ $item->subject_name }}</td>
-                        <td class="text-end text-danger fw-semibold">{{ number_format($item->current_grade, 2) }}</td>
-                        <td class="text-end">{{ number_format($item->low_grade_threshold, 2) }}</td>
-                        <td class="text-end">{{ number_format($item->low_grade_threshold - $item->current_grade, 2) }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="5" class="text-center text-muted py-3">No subjects at risk.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle">
+                <thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>Qty</th><th>Reorder level</th><th>Supplier</th><th>Status</th></tr></thead>
+                <tbody>
+                    @forelse ($lowStock as $p)
+                        <tr>
+                            <td>{{ $p->sku }}</td>
+                            <td><a href="{{ route('products.show', $p) }}">{{ $p->name }}</a></td>
+                            <td>{{ $p->category->name ?? '—' }}</td>
+                            <td>{{ $p->quantity }}</td>
+                            <td>{{ $p->reorder_level }}</td>
+                            <td>{{ $p->supplier->name ?? '—' }}</td>
+                            <td><span class="badge bg-{{ $p->stock_status_color }}">{{ $p->stock_status }}</span></td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="7" class="text-center text-muted">All products are well stocked.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
-<!-- Grade Movement Report -->
-<div class="card mb-4">
-    <div class="card-header">
-        <h5 class="mb-0">Grade Movement Report</h5>
-        <div class="small text-muted">{{ \Carbon\Carbon::parse($from)->format('M d, Y') }} to {{ \Carbon\Carbon::parse($to)->format('M d, Y') }}</div>
+<!-- 3. Inventory Valuation Report -->
+<div class="card stat-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Inventory Valuation Report</h5>
+        <a href="{{ route('reports.export', ['type' => 'valuation']) }}" class="btn btn-sm btn-outline-secondary">Export CSV</a>
     </div>
-    <div class="card-body pb-0">
-        <span class="badge bg-secondary me-1">Total: {{ $movementSummary['total'] }}</span>
-        <span class="badge bg-success me-1">Increase: {{ $movementSummary['increase'] }}</span>
-        <span class="badge bg-danger me-1">Decrease: {{ $movementSummary['decrease'] }}</span>
-        <span class="badge bg-warning text-dark">Adjustment: {{ $movementSummary['adjustment'] }}</span>
-    </div>
-    <div class="table-responsive mt-3">
-        <table class="table table-striped table-hover align-middle mb-0">
-            <thead>
-                <tr class="border-accent">
-                    <th>Date/Time</th>
-                    <th>Subject</th>
-                    <th>Type</th>
-                    <th class="text-end">Change</th>
-                    <th class="text-end">Grade</th>
-                    <th>Reference</th>
-                    <th>By</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($movements as $t)
-                    @php
-                        $badge = match ($t->type) {
-                            'increase' => 'success',
-                            'decrease' => 'danger',
-                            default => 'warning',
-                        };
-                    @endphp
-                    <tr>
-                        <td class="text-nowrap">{{ $t->created_at->format('M d, Y h:i A') }}</td>
-                        <td>{{ $t->gradeItem->subject_code }} <span class="small text-muted">{{ $t->gradeItem->subject_name }}</span></td>
-                        <td><span class="badge bg-{{ $badge }}">{{ ucfirst($t->type) }}</span></td>
-                        <td class="text-end fw-semibold">
-                            @if ($t->type === 'increase')
-                                <span class="text-success">+{{ number_format($t->quantity, 2) }}</span>
-                            @elseif ($t->type === 'decrease')
-                                <span class="text-danger">-{{ number_format($t->quantity, 2) }}</span>
-                            @else
-                                <span class="text-warning">Set</span>
-                            @endif
-                        </td>
-                        <td class="text-end text-nowrap">{{ number_format($t->previous_grade, 2) }} &rarr; {{ number_format($t->new_grade, 2) }}</td>
-                        <td>{{ $t->reference_number ?? '-' }}</td>
-                        <td>{{ $t->user->name }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="7" class="text-center text-muted py-3">No transactions in this date range.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle">
+                <thead><tr><th>SKU</th><th>Product</th><th class="text-end">Qty</th><th class="text-end">Unit price</th><th class="text-end">Total value</th></tr></thead>
+                <tbody>
+                    @foreach ($products as $p)
+                        <tr>
+                            <td>{{ $p->sku }}</td>
+                            <td>{{ $p->name }}</td>
+                            <td class="text-end">{{ $p->quantity }}</td>
+                            <td class="text-end text-money">₱{{ number_format($p->unit_price, 2) }}</td>
+                            <td class="text-end text-money">₱{{ number_format($p->quantity * $p->unit_price, 2) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold"><td colspan="4" class="text-end">Total inventory value</td><td class="text-end text-money">₱{{ number_format($totalValue, 2) }}</td></tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
 </div>
+
 @endsection

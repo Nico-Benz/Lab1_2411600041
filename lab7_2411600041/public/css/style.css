@@ -233,3 +233,8 @@ body {
   background-color: var(--theme-accent);
   color: #ffffff;
 }
+
+/* ===== LAB 6 ADDITIONS ===== */
+.stat-flash { transition: transform 0.3s ease; transform: scale(1.12); }
+.badge-adjustment { background-color: var(--theme-accent); color: #ffffff; }
+.table .text-money { white-space: nowrap; }

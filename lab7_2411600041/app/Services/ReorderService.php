@@ -2,167 +2,182 @@
 
 namespace App\Services;
 
-use App\Models\GradeItem;
-use App\Models\GradeTransaction;
+use App\Models\InventoryTransaction;
+use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
+/**
+ * Business logic for automatic replenishment.
+ *
+ * Reorder Point = (Average Daily Usage x Lead Time) + Safety Stock
+ *   - Average Daily Usage = total "stock out" of the last 30 days / 30
+ *   - Lead Time           = the supplier's lead_time_days
+ *   - Safety Stock        = the product's reorder_level (the minimum we never want to go below)
+ */
 class ReorderService
 {
-    /**
-     * Fee per point na ginagamit sa automatic na request (pwedeng palitan).
-     */
-    public const DEFAULT_FEE_PER_POINT = 50;
+    /** product_id => total stock out in the usage window (loaded once, with ONE query) */
+    private ?Collection $usage = null;
 
-    /**
-     * Ang grade level na nagti-trigger ng automatic request.
-     */
-    public function calculateReorderPoint(GradeItem $product): float
+    protected function usageTotals(): Collection
     {
-        $averageDailyUsage = $this->calculateAverageDailyUsage($product);
-        $leadTime = $product->supplier->lead_time_days ?? 7;
-        $safetyStock = $product->low_grade_threshold ?? 10;
+        return $this->usage ??= InventoryTransaction::query()
+            ->where('transaction_type', 'out')
+            ->where('created_at', '>=', now()->subDays($this->usageDays()))
+            ->selectRaw('product_id, SUM(quantity) as total_out')
+            ->groupBy('product_id')
+            ->pluck('total_out', 'product_id');
+    }
 
-        return ($averageDailyUsage * $leadTime) + $safetyStock;
+    protected function usageDays(): int
+    {
+        return max(1, (int) config('procurement.usage_days', 30));
+    }
+
+    public function averageDailyUsage(Product $product): float
+    {
+        $total = (int) ($this->usageTotals()->get($product->id) ?? 0);
+
+        return round($total / $this->usageDays(), 4);
+    }
+
+    public function leadTimeDays(Product $product): int
+    {
+        return (int) ($product->supplier?->lead_time_days ?? config('procurement.default_lead_time', 7));
+    }
+
+    /** (average daily usage x lead time) + safety stock, rounded up */
+    public function calculateReorderPoint(Product $product): int
+    {
+        $usageDuringLeadTime = $this->averageDailyUsage($product) * $this->leadTimeDays($product);
+
+        return (int) ceil($usageDuringLeadTime + (int) $product->reorder_level);
     }
 
     /**
-     * Average na puntos na nawawala kada araw.
-     * Galing sa 'decrease' transactions sa nakaraang 30 araw.
+     * Simplified EOQ: order enough to cover lead time + cover days (+ safety stock),
+     * never less than the supplier minimum, always in whole packages.
      */
-    public function calculateAverageDailyUsage(GradeItem $product, int $days = 30): float
+    public function calculateOptimalOrderQuantity(Product $product): int
     {
-        $totalLost = GradeTransaction::where('grade_item_id', $product->id)
-            ->where('type', 'decrease')
-            ->where('created_at', '>=', now()->subDays($days))
-            ->sum('quantity');
+        $usage = $this->averageDailyUsage($product);
+        $safety = (int) $product->reorder_level;
+        $coverDays = (int) config('procurement.cover_days', 30);
 
-        return (float) $totalLost / $days;
+        $target = (int) ceil($usage * ($this->leadTimeDays($product) + $coverDays)) + $safety;
+        $target = max($target, $safety * 2);                       // even with no usage, keep a healthy level
+
+        $needed = max(0, $target - (int) $product->quantity);
+        $quantity = max($needed, max(1, (int) $product->min_order_quantity));
+        $package = max(1, (int) $product->package_size);
+
+        return (int) (ceil($quantity / $package) * $package);
     }
 
-    /**
-     * Ilang puntos ang dapat i-request para bumalik sa reorder point.
-     * Hindi lalampas sa 100 ang grade.
-     */
-    public function calculateOptimalOrderQuantity(GradeItem $product): float
-    {
-        $gap = $this->calculateReorderPoint($product) - (float) $product->current_grade;
-        $room = 100 - (float) $product->current_grade;
-
-        return (float) max(0, min(ceil($gap), $room));
-    }
-
-    /**
-     * Mga subject na may grade (higit 0) pero mas mababa sa reorder point.
-     */
+    /** Every product whose stock is at or below its reorder point */
     public function getProductsNeedingReorder(): Collection
     {
-        return GradeItem::with('supplier')
-            ->where('current_grade', '>', 0)
-            ->get()
-            ->filter(fn ($item) => (float) $item->current_grade < $this->calculateReorderPoint($item))
+        return Product::with('supplier')->orderBy('name')->get()
+            ->filter(fn (Product $product) => (int) $product->quantity <= $this->calculateReorderPoint($product))
             ->values();
     }
 
-    /**
-     * Gumagawa ng draft purchase orders (isa kada instructor).
-     * Ibinabalik ang buod: created, no_supplier, already_open.
-     */
-    public function generatePurchaseOrders(): array
-    {
-        $creator = User::where('role', 'admin')->first();
-
-        if (! $creator) {
-            throw new \RuntimeException('No admin user found to be the creator of the purchase orders.');
-        }
-
-        $products = $this->getProductsNeedingReorder();
-        $groupedBySupplier = $this->groupProductsBySupplier($products);
-
-        $result = [
-            'created'      => [],
-            'no_supplier'  => $products->whereNull('supplier_id')->pluck('subject_code')->all(),
-            'already_open' => [],
-        ];
-
-        foreach ($groupedBySupplier as $supplierId => $items) {
-            $supplier = $items->first()->supplier;
-
-            if (! $supplier || ! $supplier->is_active) {
-                continue;
-            }
-
-            $lines = [];
-
-            foreach ($items as $item) {
-                if ($this->hasOpenOrder($item)) {
-                    $result['already_open'][] = $item->subject_code;
-                    continue;
-                }
-
-                $quantity = $this->calculateOptimalOrderQuantity($item);
-
-                if ($quantity <= 0) {
-                    continue;
-                }
-
-                $lines[] = [
-                    'grade_item_id'    => $item->id,
-                    'quantity_ordered' => $quantity,
-                    'unit_price'       => self::DEFAULT_FEE_PER_POINT,
-                ];
-            }
-
-            if (empty($lines)) {
-                continue;
-            }
-
-            $order = DB::transaction(function () use ($supplier, $lines, $creator) {
-                $order = PurchaseOrder::create([
-                    'reference_number'       => PurchaseOrder::generateReferenceNumber(),
-                    'supplier_id'            => $supplier->id,
-                    'status'                 => 'draft',
-                    'order_date'             => now()->toDateString(),
-                    'expected_delivery_date' => now()->addDays($supplier->lead_time_days ?? 7)->toDateString(),
-                    'tax'                    => 0,
-                    'notes'                  => 'Auto-generated by inventory:check-reorder',
-                    'created_by'             => $creator->id,
-                ]);
-
-                foreach ($lines as $line) {
-                    $order->items()->create($line);
-                }
-
-                $order->calculateTotal();
-
-                return $order;
-            });
-
-            $result['created'][] = $order;
-        }
-
-        return $result;
-    }
-
-    /**
-     * Pinagsasama-sama ang mga subject ayon sa instructor (supplier).
-     * Ang walang supplier ay hindi kasama.
-     */
+    /** supplier_id => collection of products (products without a supplier are left out) */
     public function groupProductsBySupplier(Collection $products): Collection
     {
-        return $products->whereNotNull('supplier_id')->groupBy('supplier_id');
+        return $products->filter(fn (Product $product) => $product->supplier_id)->groupBy('supplier_id');
+    }
+
+    /** True when the product is already on a draft / pending / approved / sent order */
+    public function hasOpenOrder(Product $product): bool
+    {
+        return PurchaseOrderItem::where('product_id', $product->id)
+            ->whereHas('purchaseOrder', fn ($query) => $query->open())
+            ->exists();
     }
 
     /**
-     * May bukas na PO na ba ang subject na ito?
+     * Create ONE draft purchase order per supplier for all products that need a reorder.
+     *
+     * @return array{orders: Collection, skipped: Collection, needing: int}
      */
-    private function hasOpenOrder(GradeItem $item): bool
+    public function generatePurchaseOrders(?User $createdBy = null): array
     {
-        return PurchaseOrderItem::where('grade_item_id', $item->id)
-            ->whereHas('purchaseOrder', fn ($q) => $q->whereIn('status', ['draft', 'pending', 'approved', 'sent']))
-            ->exists();
+        $createdBy ??= User::where('role', 'admin')->orderBy('id')->first();
+
+        if (! $createdBy) {
+            throw new RuntimeException('No admin user found. Create an admin first so the draft orders have an owner.');
+        }
+
+        $needing = $this->getProductsNeedingReorder();
+        $skipped = collect();
+        $eligible = collect();
+
+        foreach ($needing as $product) {
+            $supplier = $product->supplier;
+
+            if (! $supplier || $supplier->trashed() || ! $supplier->is_active) {
+                $skipped->push(['sku' => $product->sku, 'name' => $product->name, 'reason' => 'No active supplier']);
+                continue;
+            }
+
+            if ($this->hasOpenOrder($product)) {
+                $skipped->push(['sku' => $product->sku, 'name' => $product->name, 'reason' => 'Open purchase order already exists']);
+                continue;
+            }
+
+            $eligible->push($product);
+        }
+
+        $orders = collect();
+
+        foreach ($this->groupProductsBySupplier($eligible) as $products) {
+            $orders->push($this->createDraftOrder($products->first()->supplier, $products, $createdBy));
+        }
+
+        return ['orders' => $orders, 'skipped' => $skipped, 'needing' => $needing->count()];
+    }
+
+    protected function createDraftOrder(Supplier $supplier, Collection $products, User $createdBy): PurchaseOrder
+    {
+        return DB::transaction(function () use ($supplier, $products, $createdBy) {
+            $notes = 'Auto-generated by inventory:check-reorder.';
+
+            $order = PurchaseOrder::create([
+                'reference_number' => PurchaseOrder::generateReferenceNumber(),
+                'supplier_id' => $supplier->id,
+                'status' => 'draft',
+                'order_date' => today(),
+                'expected_delivery_date' => today()->addDays((int) $supplier->lead_time_days),
+                'notes' => $notes,
+                'terms' => config('procurement.default_terms'),
+                'is_auto_generated' => true,
+                'created_by' => $createdBy->id,
+            ]);
+
+            foreach ($products as $product) {
+                $order->items()->create([
+                    'product_id' => $product->id,
+                    'quantity' => $this->calculateOptimalOrderQuantity($product),
+                    'unit_price' => $product->costFor($supplier->id),   // price saved at the time of the order
+                ]);
+            }
+
+            $order->calculateTotal();
+
+            if ((float) $order->subtotal < (float) $supplier->minimum_order_amount) {
+                $order->notes = $notes . ' Below the supplier minimum order amount of PHP '
+                    . number_format((float) $supplier->minimum_order_amount, 2) . '.';
+                $order->saveQuietly();
+            }
+
+            return $order->load(['supplier', 'items.product']);
+        });
     }
 }

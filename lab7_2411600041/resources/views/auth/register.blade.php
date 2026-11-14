@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Student Grade Portal</title>
+    <title>Register - Student Supplies Inventory</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
 </head>
@@ -11,7 +11,7 @@
 
     <div class="card login-card" style="width: 100%; max-width: 420px;">
         <div class="card-header text-center py-4">
-            <h3 class="text-white fw-bold mb-0">Student Grade Portal</h3>
+            <h3 class="text-white fw-bold mb-0">Student Supplies Inventory</h3>
         </div>
         <div class="card-body p-4">
 

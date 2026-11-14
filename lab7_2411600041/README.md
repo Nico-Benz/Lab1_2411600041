@@ -1,59 +1,72 @@
-# Student Grade Portal - Lab 7
+# Lab 7 - Advanced MVC: Automated Inventory Replenishment and Supplier Management
 
-Advanced MVC Architecture with Laravel: Automated Inventory Replenishment and Supplier Management System.
+Student Supplies Inventory (Laravel 12). Built on top of Lab 6 (real-time inventory tracking).
 
-Built by Nico Benz A. Sasing (2411600041) for Web Systems and Technologies. This is the continuation of the Student Grade Portal from Lab 5 and Lab 6.
+## What is new in Lab 7
 
-## How the Lab 7 words map to this project
+| Part | Feature | Where to look |
+|------|---------|---------------|
+| 1 | Suppliers (CRUD, soft delete, restore, search, sort, notes) | `SupplierController`, `app/Models/Supplier.php`, `resources/views/suppliers` |
+| 2 | Purchase orders (draft, pending, approved, rejected, sent, received, cancelled) | `PurchaseOrderController`, `PurchaseOrderPolicy`, `resources/views/purchase-orders` |
+| 3 | Automatic reorder: `inventory:check-reorder`, scheduled daily 6:00 AM | `ReorderService`, `CheckReorderPoints`, `routes/console.php` |
+| 4 | Emails (queued, with PDF): created, approved, sent to supplier, low stock | `app/Mail`, `PurchaseOrderObserver`, `resources/views/emails` |
+| 5 | Dashboard widgets (View Composers + AJAX refresh) | `ViewServiceProvider`, `ProcurementWidgets`, `resources/views/widgets` |
+| 6 | Supplier performance report with charts | `SupplierPerformanceService`, `reports/supplier-performance` |
+| 7 | Search and filters, reusable `<x-filter-form>` component | `SearchService`, `components/filter-form.blade.php` |
+| 8 | CSV and PDF exports | `ExportController`, `app/Exports` |
+| 9 | Tests | `tests/Feature/Lab7ProcurementTest.php` |
 
-| Lab 7 term     | In this project                                                                     |
-| -------------- | ----------------------------------------------------------------------------------- |
-| Product        | Grade item (a subject)                                                              |
-| Supplier       | Instructor                                                                          |
-| Purchase Order | Remedial request sent to the instructor for an At Risk subject                      |
-| Order quantity | Points the grade needs to recover                                                   |
-| Unit price     | Fee per point (default 50)                                                          |
-| Reorder point  | Grade level that triggers an automatic request                                      |
-| Receive items  | Instructor completes the remedial work, and a grade increase transaction is created |
-
-## New features in Lab 7
-
-- **Supplier module:** create, view, edit and soft delete suppliers. Deleted suppliers are hidden from lists but kept in the database, and can be restored.
-- **Purchase Order system:** PO items, auto reference numbers (PO-YYYYMMDD-0001), statuses (draft, pending, approved, rejected, sent, received, cancelled), approval history, and a PurchaseOrderPolicy for role-based rules.
-- **Automated reorder:** ReorderService computes the reorder point from recent usage and creates purchase orders. Command: `php artisan inventory:check-reorder`. It is scheduled daily at 6:00 AM (Asia/Manila) in `routes/console.php`.
-- **Email notifications:** four Mailables (created, approved, sent, low stock alert) with email templates. The PO PDF is attached to the created email.
-- **Procurement dashboard:** widgets fed by View Composers, API endpoints, and 60-second query caching.
-- **Supplier performance:** SupplierPerformanceService and a report page with charts (`/reports/suppliers`).
-- **Search and filtering:** scopeFilter on models, SearchService, and a reusable filter form component.
-- **Exports:** CSV and PDF (barryvdh/laravel-dompdf) through ExportService and ExportController.
-- **Advanced Eloquent relationships:** many-to-many (`grade_item_supplier` pivot table) and polymorphic (`notes` table used by Supplier and PurchaseOrder).
+Extra relationships: many-to-many (`product_supplier` with supplier price) and polymorphic notes (`notes` table for suppliers and purchase orders).
 
 ## Roles
 
-admin, manager, staff and viewer. The `admin` Gate is in `AppServiceProvider`. Purchase order rules are in `app/Policies/PurchaseOrderPolicy.php`.
+| Role | Can do |
+|------|--------|
+| admin | everything (suppliers CRUD, users, adjustments, delete draft orders, receive items) |
+| manager | create orders, approve / reject, mark as sent, cancel |
+| staff (warehouse) | create orders, receive items |
+| viewer | read only |
 
-## How to run
+All seeded accounts use the password `password`:
+`test@example.com` (admin), `manager@example.com`, `staff@example.com`, `viewer@example.com`.
 
-1. Install PHP 8.2+, Composer, and XAMPP (start MySQL).
-2. Copy `.env.example` to `.env` and set `DB_DATABASE=lab7_2411600041`.
-3. Create the database `lab7_2411600041` in phpMyAdmin.
-4. Run these commands:
+## Formulas
 
 ```
-composer install
-php artisan key:generate
-php artisan migrate --seed
-php artisan serve --port=8002
-php artisan queue:work
+Reorder point  = (average daily usage x supplier lead time) + safety stock
+Average usage  = total "stock out" of the last 30 days / 30
+Safety stock   = the product reorder level
+Order quantity = enough for lead time + 30 days + safety stock, minus current stock,
+                 at least the minimum order quantity, rounded up to the package size
 ```
 
-5. Open http://127.0.0.1:8002
+Settings (tax rate, usage days, cover days) are in `config/procurement.php`.
 
-## Notes
+## Setup
 
-- Emails use `MAIL_MAILER=log`, so they are written to `storage/logs/laravel.log`.
-- Queue driver is `database`, so `php artisan queue:work` must be running to send emails and bell notifications.
-- Supplier performance measures delivered quantities (received vs ordered), not item accuracy.
-- The Subjects page keeps its own JavaScript filter. The server-side filter form is used on the Purchase Orders and Transactions pages.
-- The `.env` file is not committed.
-- `php artisan migrate --seed` creates the Test Admin account and the subjects only. Suppliers, purchase orders and the other test users are not seeded, so they must be added in the app.
+1. Start Apache and MySQL in XAMPP. In phpMyAdmin create the database `lab7_inventory_2411600041`.
+2. In the project folder:
+   ```
+   composer install
+   composer require barryvdh/laravel-dompdf
+   copy .env.example .env        (or copy the .env of Lab 6 and change DB_DATABASE)
+   php artisan key:generate
+   php artisan migrate:fresh --seed
+   ```
+3. In `.env` use `MAIL_MAILER=log` so emails are written to `storage/logs/laravel.log` (the sample suppliers use fake email addresses).
+4. Run (two terminals):
+   ```
+   php artisan serve
+   php artisan queue:work
+   ```
+5. Try the automatic reorder: `php artisan inventory:check-reorder`
+6. Show the schedule: `php artisan schedule:list`   (run it for real with `php artisan schedule:work`)
+7. Tests: `php artisan test`
+
+## Quick demo flow
+
+1. Login as admin, open the dashboard (see the procurement widgets).
+2. Run `php artisan inventory:check-reorder`, then open Purchase Orders > filter Draft.
+3. Open a draft > Send for Approval. Login as manager > Approve > Mark as Sent.
+4. Login as staff > open the sent order > Receive items. Check Stock Movements and the product stock.
+5. Open Reports > Supplier Performance, then export CSV / PDF from any list.

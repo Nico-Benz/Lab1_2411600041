@@ -5,16 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Supplier extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes; // delete() only fills deleted_at, the row stays in the table
+
+    /** Purchase order statuses that are still "open" (not finished yet) */
+    public const OPEN_STATUSES = ['draft', 'pending', 'approved', 'sent'];
 
     protected $fillable = [
-        'company_name',
+        'name',
         'contact_person',
         'email',
         'phone',
@@ -25,32 +28,29 @@ class Supplier extends Model
         'is_active',
     ];
 
-    protected $casts = [
-        'is_active' => 'boolean',
-        'lead_time_days' => 'integer',
-        'minimum_order_amount' => 'decimal:2',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'lead_time_days' => 'integer',
+            'minimum_order_amount' => 'decimal:2',
+            'is_active' => 'boolean',
+        ];
+    }
 
+    // ---------- Relationships ----------
+
+    /** Products whose main (default) supplier is this supplier */
     public function products(): HasMany
     {
-        return $this->hasMany(GradeItem::class);
+        return $this->hasMany(Product::class);
     }
 
-    /**
-     * Many-to-many: mga subject na puwedeng ituro ng instructor na ito
-     * bilang alternate. Ginagamit ang pivot table na grade_item_supplier.
-     */
-    public function alternateItems(): BelongsToMany
+    /** Many-to-many: every product this supplier can supply, with the agreed price */
+    public function suppliedProducts(): BelongsToMany
     {
-        return $this->belongsToMany(GradeItem::class, 'grade_item_supplier')
-            ->withPivot('is_preferred')
+        return $this->belongsToMany(Product::class, 'product_supplier')
+            ->withPivot(['supplier_price', 'supplier_sku', 'is_preferred'])
             ->withTimestamps();
-    }
-
-    // Mga sticky note na nakadikit sa supplier na ito
-       public function notes(): MorphMany
-    {
-        return $this->morphMany(Note::class, 'noteable');
     }
 
     public function purchaseOrders(): HasMany
@@ -58,40 +58,70 @@ class Supplier extends Model
         return $this->hasMany(PurchaseOrder::class);
     }
 
+    /** Polymorphic: notes written about this supplier */
+    public function stickyNotes(): MorphMany
+    {
+        return $this->morphMany(Note::class, 'noteable')->latest();
+    }
+
+    // ---------- Query scopes ----------
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
+    /** Suppliers that can deliver within the given number of days */
     public function scopeWithLeadTime(Builder $query, int $days): Builder
     {
         return $query->where('lead_time_days', '<=', $days);
     }
 
-    public function getFullContactAttribute(): string
+    public function scopeSearch(Builder $query, ?string $term): Builder
     {
-        return trim($this->contact_person
-            . ' | ' . $this->email
-            . ($this->phone ? ' | ' . $this->phone : ''));
+        if ($term === null || trim($term) === '') {
+            return $query;
+        }
+
+        $like = '%' . trim($term) . '%';
+
+        return $query->where(function (Builder $q) use ($like) {
+            $q->where('name', 'like', $like)
+                ->orWhere('contact_person', 'like', $like)
+                ->orWhere('email', 'like', $like);
+        });
     }
 
-    // On-time delivery percentage (null kung wala pang natanggap na PO)
+    // ---------- Helpers ----------
+
+    /** "Ramon Dela Cruz · email · phone" */
+    public function getFullContactAttribute(): string
+    {
+        return "{$this->contact_person} · {$this->email} · {$this->phone}";
+    }
+
+    /** On-time delivery percentage (null when nothing was delivered yet) */
     public function getPerformanceRatingAttribute(): ?float
     {
-        $received = $this->purchaseOrders()
+        $delivered = $this->purchaseOrders()
             ->where('status', 'received')
             ->whereNotNull('received_at')
             ->whereNotNull('expected_delivery_date')
-            ->get(['expected_delivery_date', 'received_at']);
+            ->get(['id', 'received_at', 'expected_delivery_date']);
 
-        if ($received->isEmpty()) {
+        if ($delivered->isEmpty()) {
             return null;
         }
 
-        $onTime = $received->filter(
-            fn ($po) => $po->received_at->toDateString() <= $po->expected_delivery_date->toDateString()
+        $onTime = $delivered->filter(
+            fn (PurchaseOrder $po) => $po->received_at->toDateString() <= $po->expected_delivery_date->toDateString()
         )->count();
 
-        return round(($onTime / $received->count()) * 100, 1);
+        return round($onTime / $delivered->count() * 100, 1);
+    }
+
+    public function openOrdersCount(): int
+    {
+        return $this->purchaseOrders()->whereIn('status', self::OPEN_STATUSES)->count();
     }
 }

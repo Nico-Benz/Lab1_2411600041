@@ -2,12 +2,12 @@
 
 namespace App\Exports;
 
-use App\Models\PurchaseOrder;
-use Illuminate\Support\Collection;
+use App\Services\SearchService;
+use Illuminate\Http\Request;
 
-class PurchaseOrdersExport
+class PurchaseOrdersExport implements ReportExport
 {
-    public function __construct(protected array $filters = [])
+    public function __construct(private Request $request)
     {
     }
 
@@ -16,31 +16,38 @@ class PurchaseOrdersExport
         return 'Purchase Orders';
     }
 
-    public function headings(): array
+    public function filename(): string
     {
-        return [
-            'Reference', 'Supplier (Instructor)', 'Order Date', 'Expected Delivery',
-            'Status', 'Subtotal', 'Tax', 'Total', 'Created By',
-        ];
+        return 'purchase-orders-' . now()->format('Ymd-His');
     }
 
-    public function rows(): Collection
+    public function headings(): array
     {
-        return PurchaseOrder::with(['supplier', 'createdBy'])
-            ->filter($this->filters)
-            ->latest()
-            ->latest('id')
-            ->get()
-            ->map(fn (PurchaseOrder $po) => [
-                $po->reference_number,
-                $po->supplier->company_name ?? '',
-                $po->order_date?->format('Y-m-d'),
-                $po->expected_delivery_date?->format('Y-m-d'),
-                ucfirst($po->status),
-                number_format($po->subtotal, 2, '.', ''),
-                number_format($po->tax, 2, '.', ''),
-                number_format($po->total, 2, '.', ''),
-                $po->createdBy->name ?? '',
-            ]);
+        return ['Reference', 'Order Date', 'Expected Delivery', 'Supplier', 'Status', 'Items', 'Subtotal', 'Tax', 'Total', 'Created By'];
+    }
+
+    public function rows(): iterable
+    {
+        $orders = (new SearchService)->purchaseOrders($this->request)
+            ->with(['supplier', 'createdBy'])
+            ->withCount('items')
+            ->orderByDesc('order_date')
+            ->orderByDesc('id')
+            ->get();
+
+        foreach ($orders as $order) {
+            yield [
+                $order->reference_number,
+                $order->order_date->format('Y-m-d'),
+                $order->expected_delivery_date?->format('Y-m-d') ?? '',
+                $order->supplier->name ?? '',
+                ucfirst($order->status),
+                $order->items_count,
+                number_format((float) $order->subtotal, 2, '.', ''),
+                number_format((float) $order->tax, 2, '.', ''),
+                number_format((float) $order->total, 2, '.', ''),
+                $order->createdBy->name ?? '',
+            ];
+        }
     }
 }

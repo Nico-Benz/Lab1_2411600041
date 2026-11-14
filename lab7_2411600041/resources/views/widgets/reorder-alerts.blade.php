@@ -1,22 +1,35 @@
+{{-- Needs $reorderAlerts (bound by the View Composer, cached for 60 seconds) --}}
 <div class="card stat-card h-100">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Reorder Alerts</h5>
-        <span class="badge bg-danger" id="widget-reorder-count">{{ $reorderAlerts->count() }}</span>
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="card-title mb-0">Reorder Alerts</h5>
+            <a href="{{ route('purchase-orders.index', ['status' => 'draft']) }}" class="small">Draft orders</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead><tr><th>Product</th><th class="text-end">Stock / Reorder pt.</th><th class="text-end">Suggested</th><th></th></tr></thead>
+                <tbody id="reorderAlertsBody">
+                    @forelse ($reorderAlerts as $alert)
+                        <tr>
+                            <td>
+                                <a href="{{ route('products.show', $alert['id']) }}">{{ $alert['name'] }}</a>
+                                <div class="small text-muted">{{ $alert['sku'] }} · {{ $alert['supplier'] ?? 'No supplier' }}</div>
+                            </td>
+                            <td class="text-end">{{ $alert['quantity'] }} / {{ $alert['reorder_point'] }}</td>
+                            <td class="text-end">{{ $alert['suggested'] }}</td>
+                            <td>
+                                @if ($alert['has_open_order'])
+                                    <span class="badge bg-info">On order</span>
+                                @else
+                                    <span class="badge bg-danger">Reorder</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="4" class="text-center text-muted">All products are above their reorder point.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
-    <ul class="list-group list-group-flush" id="widget-reorder-alerts-list">
-        @forelse ($reorderAlerts as $row)
-            <li class="list-group-item">
-                <div class="d-flex justify-content-between">
-                    <strong>{{ $row['code'] }}</strong>
-                    <span class="text-danger">{{ number_format($row['grade'], 2) }}</span>
-                </div>
-                <div class="small text-muted">
-                    {{ $row['name'] }}<br>
-                    Reorder point: {{ $row['reorder_point'] }} &middot; Instructor: {{ $row['supplier'] }}
-                </div>
-            </li>
-        @empty
-            <li class="list-group-item text-muted">No subjects need a reorder.</li>
-        @endforelse
-    </ul>
 </div>

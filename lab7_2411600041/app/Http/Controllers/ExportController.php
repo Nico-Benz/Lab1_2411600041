@@ -4,49 +4,56 @@ namespace App\Http\Controllers;
 
 use App\Exports\ProductsExport;
 use App\Exports\PurchaseOrdersExport;
+use App\Exports\ReportExport;
 use App\Exports\SupplierPerformanceExport;
 use App\Exports\TransactionsExport;
-use App\Services\ExportService;
+use App\Services\PdfService;
 use Illuminate\Http\Request;
 
+/** GET /exports/{report}/{format}  -> report: products, purchase-orders, transactions, supplier-performance | format: csv, pdf */
 class ExportController extends Controller
 {
-    // type => [export class, filters na tatanggapin, pangalan ng file]
-    private const EXPORTS = [
-        'subjects' => [
-            ProductsExport::class,
-            ['search', 'category', 'supplier_id', 'status'],
-            'subjects',
-        ],
-        'purchase-orders' => [
-            PurchaseOrdersExport::class,
-            ['search', 'supplier_id', 'status', 'date_from', 'date_to'],
-            'purchase-orders',
-        ],
-        'transactions' => [
-            TransactionsExport::class,
-            ['grade_item_id', 'type', 'user_id', 'date_from', 'date_to'],
-            'transactions',
-        ],
-        'supplier-performance' => [
-            SupplierPerformanceExport::class,
-            [],
-            'supplier-performance',
-        ],
-    ];
-
-    public function download(Request $request, ExportService $exports, string $report, string $format)
+    public function download(Request $request, string $report, string $format)
     {
-        // Kapag hindi kilala ang type o hindi csv ang format: 404
-        abort_unless(isset(self::EXPORTS[$report]) && in_array($format, ['csv', 'pdf'], true), 404);
+        abort_unless(in_array($format, ['csv', 'pdf'], true), 404);
 
-        [$class, $filterKeys, $name] = self::EXPORTS[$report];
+        $export = match ($report) {
+            'products' => new ProductsExport($request),
+            'purchase-orders' => new PurchaseOrdersExport($request),
+            'transactions' => new TransactionsExport($request),
+            'supplier-performance' => new SupplierPerformanceExport(),
+            default => abort(404),
+        };
 
-        $export = new $class($request->only($filterKeys));
-        $filename = $name . '-' . now()->format('Ymd-His') . '.' . $format;
+        return $format === 'csv' ? $this->csv($export) : $this->pdf($export);
+    }
 
-        return $format === 'pdf'
-            ? $exports->pdf($export, $filename)
-            : $exports->csv($export, $filename);
+    private function csv(ReportExport $export)
+    {
+        return response()->streamDownload(function () use ($export) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF"); // BOM so Excel reads the file as UTF-8
+            fputcsv($out, $export->headings(), ',', '"', '');
+
+            foreach ($export->rows() as $row) {
+                fputcsv($out, $row, ',', '"', '');
+            }
+
+            fclose($out);
+        }, $export->filename() . '.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function pdf(ReportExport $export)
+    {
+        if (! PdfService::available()) {
+            return back()->with('error', 'PDF export needs the dompdf package. Run this in the terminal: composer require barryvdh/laravel-dompdf');
+        }
+
+        return PdfService::download('exports.table', [
+            'title' => $export->title(),
+            'headings' => $export->headings(),
+            'rows' => iterator_to_array($export->rows(), false),
+            'generatedAt' => now()->format('M d, Y g:i A'),
+        ], $export->filename() . '.pdf', 'landscape');
     }
 }

@@ -2,50 +2,39 @@
 
 namespace App\Mail;
 
-use App\Models\GradeItem;
+use App\Models\Product;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
+/** Sent to admins when a product drops to its reorder level */
 class LowStockAlert extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    /**
-     * Tumatanggap ng GradeItem (subject) na At Risk.
-     */
-    public function __construct(public GradeItem $gradeItem)
+    public function __construct(public Product $product, public int $suggestedQuantity = 0)
     {
+        $this->afterCommit();
     }
 
-    /**
-     * Ang subject line ng email.
-     */
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'At Risk: ' . $this->gradeItem->subject_code . ' is below the threshold',
-        );
+        return new Envelope(subject: "Low stock: {$this->product->name}");
     }
 
-    /**
-     * Ang view at ang data na ipapasa dito.
-     */
     public function content(): Content
     {
+        $this->product->loadMissing('supplier');
+
         return new Content(
             view: 'emails.low-stock-alert',
-            with: ['item' => $this->gradeItem],
+            with: ['product' => $this->product, 'suggestedQuantity' => $this->suggestedQuantity],
         );
     }
 
-    /**
-     * @return array<int, Attachment>
-     */
     public function attachments(): array
     {
         return [];

@@ -2,29 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\GradeItem;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    /** Mark one notification as read, then go to the product. */
     public function read(Request $request, string $id)
     {
         $notification = $request->user()->notifications()->findOrFail($id);
         $notification->markAsRead();
 
-        $itemId = $notification->data['grade_item_id'] ?? null;
+        $data = $notification->data;
 
-        if ($itemId && GradeItem::whereKey($itemId)->exists()) {
-            return redirect()->route('grade-items.show', $itemId);
+        if (! empty($data['url'])) {
+            return redirect($data['url']);          // Lab 7: e.g. the draft purchase orders list
         }
 
-        return back();
+        return ! empty($data['product_id'])
+            ? redirect()->route('products.show', $data['product_id'])
+            : back();
     }
 
     public function readAll(Request $request)
     {
         $request->user()->unreadNotifications->markAsRead();
 
-        return back();
+        return back()->with('success', 'All notifications marked as read.');
     }
 }

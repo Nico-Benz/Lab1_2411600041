@@ -2,43 +2,44 @@
 
 namespace App\Exports;
 
-use App\Models\GradeItem;
-use Illuminate\Support\Collection;
+use App\Services\SearchService;
+use Illuminate\Http\Request;
 
-class ProductsExport
+class ProductsExport implements ReportExport
 {
-    public function __construct(protected array $filters = [])
+    public function __construct(private Request $request)
     {
     }
 
     public function title(): string
     {
-        return 'Subjects List';
+        return 'Products List';
+    }
+
+    public function filename(): string
+    {
+        return 'products-' . now()->format('Ymd-His');
     }
 
     public function headings(): array
     {
-        return [
-            'Code', 'Subject Name', 'Category', 'Units',
-            'Grade', 'Threshold', 'Status', 'Instructor (Supplier)',
-        ];
+        return ['SKU', 'Product', 'Brand', 'Category', 'Supplier', 'Quantity', 'Reorder Level', 'Unit Price', 'Status'];
     }
 
-    public function rows(): Collection
+    public function rows(): iterable
     {
-        return GradeItem::with('supplier')
-            ->filter($this->filters)
-            ->orderBy('subject_code')
-            ->get()
-            ->map(fn (GradeItem $item) => [
-                $item->subject_code,
-                $item->subject_name,
-                $item->category,
-                $item->units,
-                number_format($item->current_grade, 2, '.', ''),
-                number_format($item->low_grade_threshold, 2, '.', ''),
-                $item->isPending() ? 'Pending' : ($item->isBelowThreshold() ? 'At Risk' : 'Passed'),
-                $item->supplier->company_name ?? '',
-            ]);
+        foreach ((new SearchService)->products($this->request)->cursor() as $product) {
+            yield [
+                $product->sku,
+                $product->name,
+                $product->brand->name ?? '',
+                $product->category->name ?? '',
+                $product->supplier->name ?? '',
+                $product->quantity,
+                $product->reorder_level,
+                number_format((float) $product->unit_price, 2, '.', ''),
+                $product->stock_status,
+            ];
+        }
     }
 }

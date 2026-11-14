@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\PurchaseOrder;
+use App\Services\PdfService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -11,43 +12,42 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
+/** Sent to the SUPPLIER when the order is marked as sent (with the PDF attached) */
 class PurchaseOrderSent extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    /**
-     * Tumatanggap ng PurchaseOrder sa constructor.
-     */
     public function __construct(public PurchaseOrder $purchaseOrder)
     {
+        $this->afterCommit();
     }
 
-    /**
-     * Ang subject line ng email (para sa instructor/supplier).
-     */
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'New Purchase Order ' . $this->purchaseOrder->reference_number,
-        );
+        return new Envelope(subject: "New Purchase Order {$this->purchaseOrder->reference_number}");
     }
 
-    /**
-     * Ang view at ang data na ipapasa dito.
-     */
     public function content(): Content
     {
+        $this->purchaseOrder->loadMissing(['supplier', 'items.product']);
+
         return new Content(
             view: 'emails.purchase-order-sent',
-            with: ['order' => $this->purchaseOrder],
+            with: ['po' => $this->purchaseOrder],
         );
     }
 
-    /**
-     * @return array<int, Attachment>
-     */
     public function attachments(): array
     {
-        return [];
+        if (! PdfService::available()) {
+            return [];
+        }
+
+        $po = $this->purchaseOrder->loadMissing(['supplier', 'items.product', 'createdBy']);
+
+        return [
+            Attachment::fromData(fn () => PdfService::output('pdf.purchase-order', ['po' => $po]), "{$po->reference_number}.pdf")
+                ->withMime('application/pdf'),
+        ];
     }
 }

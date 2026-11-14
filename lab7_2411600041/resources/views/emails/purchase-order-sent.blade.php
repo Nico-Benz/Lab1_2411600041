@@ -1,105 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>New Purchase Order</title>
-</head>
-<body style="margin:0; padding:0; background-color:#F5F3F8; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; color:#231C35;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F5F3F8; padding:24px 0;">
-        <tr>
-            <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:12px; overflow:hidden;">
+@extends('emails.layout')
 
-                    <!-- Header -->
-                    <tr>
-                        <td style="background-color:#231C35; padding:24px 32px;">
-                            <h1 style="margin:0; font-size:20px; color:#ffffff;">Student Grade Portal</h1>
-                            <p style="margin:4px 0 0 0; font-size:13px; color:#E67E22;">New Purchase Order</p>
-                        </td>
-                    </tr>
+@section('title', 'New Purchase Order')
+@section('tag', 'Purchase order for supplier')
 
-                    <!-- Body -->
-                    <tr>
-                        <td style="padding:32px;">
-                            <p style="margin:0 0 16px 0; font-size:15px;">
-                                Hello {{ $order->supplier->contact_person }},
-                            </p>
-                            <p style="margin:0 0 16px 0; font-size:15px;">
-                                Please see purchase order <strong>{{ $order->reference_number }}</strong> below.
-                            </p>
+@section('content')
+    <h2 style="margin-top:0;">New purchase order {{ $po->reference_number }}</h2>
 
-                            <table width="100%" cellpadding="6" cellspacing="0" style="font-size:14px; margin-bottom:20px;">
-                                <tr>
-                                    <td style="color:#6E5774; width:40%;">Order Date</td>
-                                    <td>{{ $order->order_date->format('M d, Y') }}</td>
-                                </tr>
-                                <tr>
-                                    <td style="color:#6E5774;">Expected Delivery</td>
-                                    <td>{{ $order->expected_delivery_date?->format('M d, Y') ?? 'Not set' }}</td>
-                                </tr>
-                                <tr>
-                                    <td style="color:#6E5774;">Payment Terms</td>
-                                    <td>{{ $order->supplier->payment_terms }}</td>
-                                </tr>
-                            </table>
+    <p>Hello {{ $po->supplier->contact_person }},</p>
+    <p>
+        Please see the attached purchase order. We would like to receive the items below on or before
+        <strong>{{ $po->expected_delivery_date ? $po->expected_delivery_date->format('M d, Y') : 'the agreed date' }}</strong>.
+    </p>
 
-                            <!-- Line items -->
-                            <table width="100%" cellpadding="8" cellspacing="0" style="font-size:13px; border-collapse:collapse;">
-                                <thead>
-                                    <tr style="background-color:#231C35; color:#ffffff;">
-                                        <th align="left">Subject</th>
-                                        <th align="right">Qty</th>
-                                        <th align="right">Unit Price</th>
-                                        <th align="right">Line Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($order->items as $line)
-                                        <tr style="border-bottom:1px solid #F5F3F8;">
-                                            <td>{{ $line->product->subject_code }} - {{ $line->product->subject_name }}</td>
-                                            <td align="right">{{ number_format((float) $line->quantity_ordered, 2) }}</td>
-                                            <td align="right">{{ number_format((float) $line->unit_price, 2) }}</td>
-                                            <td align="right">{{ number_format($line->line_total, 2) }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-
-                            <!-- Total -->
-                            <table width="100%" cellpadding="6" cellspacing="0" style="font-size:14px; margin-top:12px;">
-                                <tr>
-                                    <td align="right"><strong>Total</strong></td>
-                                    <td align="right" width="120" style="color:#E67E22;"><strong>{{ number_format((float) $order->total, 2) }}</strong></td>
-                                </tr>
-                            </table>
-
-                            @if ($order->terms)
-                                <p style="margin:20px 0 0 0; font-size:13px; color:#6E5774;">
-                                    <strong>Terms:</strong> {{ $order->terms }}
-                                </p>
-                            @endif
-
-                            @if ($order->notes)
-                                <p style="margin:12px 0 0 0; font-size:13px; color:#6E5774;">
-                                    <strong>Notes:</strong> {{ $order->notes }}
-                                </p>
-                            @endif
-
-                            <p style="margin:20px 0 0 0; font-size:14px;">
-                                Thank you.
-                            </p>
-                        </td>
-                    </tr>
-
-                    <!-- Footer -->
-                    <tr>
-                        <td style="background-color:#F5F3F8; padding:16px 32px; font-size:12px; color:#6E5774;">
-                            This is an automated message from the Student Grade Portal.
-                        </td>
-                    </tr>
-                </table>
-            </td>
+    <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse; font-size:14px;">
+        <tr style="background-color:#231C35; color:#ffffff; text-align:left;">
+            <th>Product</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Unit price</th>
         </tr>
+        @foreach ($po->items as $item)
+            <tr style="border-bottom:1px solid #e5e1ec;">
+                <td>{{ $item->product->name ?? '—' }}</td>
+                <td style="text-align:right;">{{ $item->quantity }}</td>
+                <td style="text-align:right;">PHP {{ number_format((float) $item->unit_price, 2) }}</td>
+            </tr>
+        @endforeach
     </table>
-</body>
-</html>
+
+    <p>Payment terms: <strong>{{ $po->supplier->payment_terms }}</strong>. Thank you!</p>
+@endsection

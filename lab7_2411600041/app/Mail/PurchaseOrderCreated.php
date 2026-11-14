@@ -3,7 +3,7 @@
 namespace App\Mail;
 
 use App\Models\PurchaseOrder;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PdfService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -12,52 +12,42 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
+/** Sent to admins and managers when a new purchase order is created (with the PDF attached) */
 class PurchaseOrderCreated extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    /**
-     * Tumatanggap ng PurchaseOrder sa constructor.
-     */
     public function __construct(public PurchaseOrder $purchaseOrder)
     {
+        $this->afterCommit(); // wait until the order and its items are saved
     }
 
-    /**
-     * Ang subject line ng email.
-     */
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'Purchase Order ' . $this->purchaseOrder->reference_number . ' Created',
-        );
+        return new Envelope(subject: "Purchase Order {$this->purchaseOrder->reference_number} created");
     }
 
-    /**
-     * Ang view at ang data na ipapasa dito.
-     */
     public function content(): Content
     {
+        $this->purchaseOrder->loadMissing(['supplier', 'items.product', 'createdBy']);
+
         return new Content(
             view: 'emails.purchase-order-created',
-            with: ['order' => $this->purchaseOrder],
+            with: ['po' => $this->purchaseOrder],
         );
     }
 
-    /**
-     * Mga attachment. Ilalagay ang PDF ng order dito sa Part 8 (dompdf).
-     *
-     * @return array<int, Attachment>
-     */
     public function attachments(): array
     {
+        if (! PdfService::available()) {
+            return [];
+        }
+
+        $po = $this->purchaseOrder->loadMissing(['supplier', 'items.product', 'createdBy']);
+
         return [
-            Attachment::fromData(
-                fn () => Pdf::loadView('exports.purchase-order-pdf', [
-                    'order' => $this->purchaseOrder->loadMissing(['supplier', 'createdBy', 'items.product']),
-                ])->output(),
-                $this->purchaseOrder->reference_number . '.pdf'
-            )->withMime('application/pdf'),
+            Attachment::fromData(fn () => PdfService::output('pdf.purchase-order', ['po' => $po]), "{$po->reference_number}.pdf")
+                ->withMime('application/pdf'),
         ];
     }
 }

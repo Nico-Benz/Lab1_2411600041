@@ -2,14 +2,20 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Part 3 Step 5: araw-araw na pag-check ng reorder points (6:00 AM)
+// Lab 7: every day at 6:00 AM (Manila time) look for products that need to be reordered.
+// Laravel 12 has no Kernel.php anymore, so the schedule lives here.
 Schedule::command('inventory:check-reorder')
     ->dailyAt('06:00')
     ->timezone('Asia/Manila')
-    ->emailOutputTo('testadmin@example.com');
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/reorder-check.log'))
+    ->onFailure(function () {
+        Log::error('Scheduled command inventory:check-reorder failed.');
+    });
