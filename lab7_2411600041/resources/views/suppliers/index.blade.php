@@ -26,7 +26,7 @@
 <x-filter-form :action="route('suppliers.index')" :fields="$filterFields" />
 
 <div class="card stat-card">
-    <div class="card-body">
+    <div class="card-body"> 
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead>
@@ -36,7 +36,7 @@
                         <th>Lead Time</th>
                         <th>Terms</th>
                         <th>Min. Order</th>
-                        <th class="text-center">Orders</th>
+                        <th class="text-center">All Orders</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>
                     </tr>

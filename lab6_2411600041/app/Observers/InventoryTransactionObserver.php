@@ -61,7 +61,7 @@ class InventoryTransactionObserver
     public function created(InventoryTransaction $transaction): void
     {
         $product = Product::findOrFail($transaction->product_id);
-        $product->quantity = $transaction->quantity_after;
+        $product->quantity = $transaction->quantity_after; // new stock
         $product->save();
 
         $before = (int) $transaction->quantity_before;
